@@ -54,19 +54,36 @@ struct bounds{
 */
 void Init();
 void InitADC();
+unsigned int ReadADC(unsigned adcRead);
+void RequestADC();
 
 
 /*
- * ------------------readAN0
-// Purpose:    Reads the analog value of AN0 and stores it in "int adc"
-// Parameters: None; But the ANCON and ANSEL registers should be setup before this method is called
-// Returns:    The new value of "int adc"
+ * ------------------ R e a d A N 0 () ---------------------------------------
+ * Purpose:    Reads the analog value of AN0 and stores it in "int adc"
+ * Parameters: None; But the ANCON and ANSEL registers should be setup before this method is called
+ * Returns:    The new value of "int adc"
 */
-unsigned int readAN0(){
-
-	return 0;
+unsigned int ReadADC(unsigned adcRead){
+    //Check if bit 1 of ADCON0 is 0. If not, wait. The previous ADC is not finished.
+    if (ADCON0bits.ADON == 0){
+        //Read the previous result.
+        //set adcRead.
+    }
+    return adcRead;
 }
 
+
+/*
+ * ------------------ R e q u e s t A N 0 () ---------------------------------------
+ * Purpose:    Reads the analog value of AN0 and stores it in "int adc"
+ * Parameters: None; But the ANCON and ANSEL registers should be setup before this method is called
+ * Returns:    The new value of "int adc"
+*/
+void RequestADC(){
+
+    ADCON0bits.ADON = 1;
+}
 
 
 /*
@@ -77,7 +94,10 @@ unsigned int readAN0(){
  */
 void Init(){
     // Comparitors off, CxIN pins are configured as digital I/O
-    
+
+    //Setup PortD to attach to the LED
+    TRISD = 0b01111111;// PORTD bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
+
     InitADC();
 }
 
@@ -100,23 +120,47 @@ void InitADC(){
     //    3. Set the result justification, ADC clock source, and acquisition time in ADCON2.
     //    4. Select the channel and turn on the ADC in ADCON0.
     //    5. Start the conversion in ADCON0.
+
+    /*
+     * 1. Configure the RA0/AN0 pin as an analog input in ANSEL.
+     * 1: To use a pin as an analog input, it must not be used by other peripheral functions multiplexed on the same pin.
+     * The pin TRIS bit must be set to ?1? (input) and the ANSEL bit associated with RA0 should be set to ?1? (analog input).
+     * However, we still want RB0/AN12 configured as a Digital input to for the switch. Therefore, we will clear ?0? the AN12 bit in ANSELH.*/
+    //Setup Port A to communicate with the ADC
+    TRISA = 0b11111111;     // PORTA bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
+    ANSELbits.ANS0 = 1;     // ANSEL bit assosciated with RA0
+    ANSELHbits.ANS12 = 0;   //Clear the AN12 bit
+
+    //2
+    ADCON1 = 0;
+
+    //3
+    ADCON2 = 0b00111000;
+
+    //4
+    ADCON0 = 0b00000001;
+
+
 }
 
 /*
  * ----------------------- m a i n () ---------------------------------
  */
 void main(){	
-
-    //Light LED Example code (sanity)
-    //TRISD = 0b01111111;// PORTD bit 7 to output (0); bits 6:0 are inputs (1)
-    //LATDbits.LATD7 = 1;// Set LAT register bit 7 to turn on LED
+    unsigned adcRead = 0;
 
     //Initialize the board and all necesary ports
     Init();
+    
+    while(1){
+        // Obtain ADC result
+        ReadADC(adcRead);
+        RequestADC();
 
-    // Obtain ADC result
-    readAN0();
-
-    while (1)
-    ;
+        if (adcRead > 0){
+            LATDbits.LATD7 = 1;// Set LAT register bit 7 to turn on LED
+        }else{
+            LATDbits.LATD7 = 0;// Set LAT register bit 7 to turn on LED
+        }
+    }
 }
