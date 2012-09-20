@@ -55,7 +55,7 @@ struct bounds{
 void Init();
 void InitADC();
 unsigned int ReadADC(unsigned adcRead);
-void RequestADC();
+unsigned int RequestAN0();
 
 
 /*
@@ -65,8 +65,8 @@ void RequestADC();
  * Returns:    The new value of "int adc"
 */
 unsigned int ReadADC(unsigned adcRead){
-    //Check if bit 1 of ADCON0 is 0. If not, wait. The previous ADC is not finished.
-    if (ADCON0bits.ADON == 0){
+    //Check if bit 1 of ADCON0 is 0. If not, return. The previous ADC is not finished.
+    if (ADCON0bits.NOT_DONE == 0){
         //Read the previous result.
         //set adcRead.
     }
@@ -80,9 +80,9 @@ unsigned int ReadADC(unsigned adcRead){
  * Parameters: None; But the ANCON and ANSEL registers should be setup before this method is called
  * Returns:    The new value of "int adc"
 */
-void RequestADC(){
+unsigned int RequestAN0(){
 
-    ADCON0bits.ADON = 1;
+
 }
 
 
@@ -107,39 +107,23 @@ void Init(){
  * Initialize any registers that the ADC needs for communication.
  */
 void InitADC(){
+    // ANO (PIN 2) Input pin for ADC conversion.
 
-    // From the template
-    // We only need one analog pin: AN0
-    // Setup ADCON0 and other ADC related registers
+    //0. //Setup Port A to communicate with the ADC
+            TRISA = 0b11111111;     // PORTA bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
 
-    // From the Programming guide p.45
-    //    Looking at the schematic of the 44-Pin Demo Board in the Appendix, the potentiometer (RP1) output is connected to the RA0/AN0 pin of the PIC18F45K20.
-    //    The basic steps needed to convert the ADC voltage on this pin are:
-    //    1. Configure the RA0/AN0 pin as an analog input in ANSEL.
-    //    2. Set the ADC voltage references in ADCON1.
-    //    3. Set the result justification, ADC clock source, and acquisition time in ADCON2.
-    //    4. Select the channel and turn on the ADC in ADCON0.
-    //    5. Start the conversion in ADCON0.
+    //1. Configure the RA0/AN0 pin as an analog input in ANSEL.
+            ANSELbits.ANS0 = 1;     // Disable Digital Input Buffer for Analog select control bit. (Data Sheet PAGE )
 
-    /*
-     * 1. Configure the RA0/AN0 pin as an analog input in ANSEL.
-     * 1: To use a pin as an analog input, it must not be used by other peripheral functions multiplexed on the same pin.
-     * The pin TRIS bit must be set to ?1? (input) and the ANSEL bit associated with RA0 should be set to ?1? (analog input).
-     * However, we still want RB0/AN12 configured as a Digital input to for the switch. Therefore, we will clear ?0? the AN12 bit in ANSELH.*/
-    //Setup Port A to communicate with the ADC
-    TRISA = 0b11111111;     // PORTA bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
-    ANSELbits.ANS0 = 1;     // ANSEL bit assosciated with RA0
-    ANSELHbits.ANS12 = 0;   //Clear the AN12 bit
+    //2. Set the ADC voltage references in ADCON1.
+            ADCON1bits.VCFG0 = 0 ;  //Positive Voltage Reference select bit supplied by VDD. (Data Sheet PAGE 272)
+            ADCON1bits.VCFG1 = 0 ;  //Negative Voltage Reference select bit supplied by VSS. (Data Sheet PAGE 272)
 
-    //2
-    ADCON1 = 0;
+    //3. Set the result justification, ADC clock source, and acquisition time in ADCON2.
+            ADCON2 = 0b00111000; // Left Justified (7), Not Used (6), Aquisition Time 20 TAD (3-5),Conversion Clock Time FOSC/2 (0-2) (Data Sheet PAGE 273)
 
-    //3
-    ADCON2 = 0b00111000;
-
-    //4
-    ADCON0 = 0b00000001;
-
+    //4. Select the channel and turn on the ADC in ADCON0.
+            ADCON0 = 0b00000001; // Not Used(7-6), Analog Channel select AN0 (5-2), A/D Conversion Status Bit (1), ADC Enable (0) (Data Sheet PAGE 271)
 
 }
 
@@ -155,7 +139,7 @@ void main(){
     while(1){
         // Obtain ADC result
         ReadADC(adcRead);
-        RequestADC();
+        RequestAN0();
 
         if (adcRead > 0){
             LATDbits.LATD7 = 1;// Set LAT register bit 7 to turn on LED
