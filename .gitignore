@@ -1,1 +1,5 @@
 .DS_Store
+*.err
+nbproject/
+build/
+dist/
