@@ -1,117 +1,119 @@
-/* UMass Lowell 16.480/552, Fall 2012
- *
- * Lab 1
- *
- * Lab1.c
- * 
- * License: GNU GPLv3.
- */
+////////////////////////////////////////////////////////////////////////////////
+/*
+    UMass Lowell 16.480/552, Fall 2012
 
-/* Group Name: Gangstas
- * Group Members:
- * - Jesse Whitworth
- * - Matthew Cook
- * - Denis Lemos
- * - Aadil Hassan
- * 
- * Date: 9-20-2012
- */
+    Purpose : 16.480 Microprocessors II Lab 1
+    File: Lab1.c
+
+    Group Name: Shoulda Been Gangstas
+    Group Members:
+        - Jesse Whitworth
+        - Matthew Cook
+        - Denis Lemos
+        - Aadil Hassan
+    
+    License: GNU GPLv3.
+    
+    Date Created: 9-20-2012
+*/
+////////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////////
+//INCLUDES
+////////////////////////////////////////////////////////////////////////////////
 
 #include "p18f45K20.h"
+#include "i2c.h"
+
+
+////////////////////////////////////////////////////////////////////////////////
+//PRAGMAS
+////////////////////////////////////////////////////////////////////////////////
+
 #pragma config FOSC = INTIO67
 #pragma config WDTEN = OFF, LVP = OFF
 
+////////////////////////////////////////////////////////////////////////////////
+//DEFINES
+////////////////////////////////////////////////////////////////////////////////
 
-//*** These are likely not needed as the new version of MPLABX has the precompilers already configured.
-////////////////////////////////////////
-/* Toolchain-specific directives
-#ifdef SDCC
-	// Small Device C Compiler
-	#include <pic18f45k20.h>
-	unsigned int at 0x2007 CONFIG =  _WDT_OFF & _PWRTE_ON & _MCLRE_OFF & _CP_OFF & _CPD_OFF & _BOD_OFF & _IESO_OFF & _FCMEN_OFF & _INTOSCIO;
-#else
-	// HI-TECH C Compiler
-	#include <htc.h>
-	__CONFIG(WDTDIS & PWRTEN & MCLRDIS & UNPROTECT & UNPROTECT & BORDIS & IESODIS & FCMDIS & INTIO );
-	#define GO_DONE GODONE
-#endif
-
-/*
- * DEFINITIONS ***** These should actually have no place in this program
- */
-
-//Preprocessors
 #define PPBit0 RA2  // PP Nibble bits
 #define PPTRIS TRISA2=TRISC2=TRISC1=TRISC0 // PP Nibble tristate; allows setting all PP nibble bits as input or output simultaneously
 
-//Structures
-struct bounds{
+////////////////////////////////////////////////////////////////////////////////
+// GLOBALS
+////////////////////////////////////////////////////////////////////////////////
+
+unsigned int Digital_Result=0;
+
+////////////////////////////////////////////////////////////////////////////////
+//STRUCTURES
+////////////////////////////////////////////////////////////////////////////////
+
+struct bounds
+{
 	unsigned int low, high;
 };
 
-/*
- * FUNCTION DECLARATIONS
-*/
+////////////////////////////////////////////////////////////////////////////////
+// FUNCTION DECLARATIONS
+////////////////////////////////////////////////////////////////////////////////
+
 void Init();
+void InitPorts();
 void InitADC();
-unsigned int ReadADC(unsigned adcRead);
-unsigned int RequestAN0();
+void InitI2C();
+void Start_Conversion();
+void Process_Digital_Result();
 
-
+////////////////////////////////////////////////////////////////////////////////
+//void Init()
 /*
- * ------------------ R e a d A N 0 () ---------------------------------------
- * Purpose:    Reads the analog value of AN0 and stores it in "int adc"
- * Parameters: None; But the ANCON and ANSEL registers should be setup before this method is called
- * Returns:    The new value of "int adc"
+        Purpose     : Initiate PIC Components
+        Parameters  : N/A
+        Output      : N/A
 */
-unsigned int ReadADC(unsigned adcRead){
-    //Check if bit 1 of ADCON0 is 0. If not, return. The previous ADC is not finished.
-    if (ADCON0bits.NOT_DONE == 0){
-        //Read the previous result.
-        //set adcRead.
-    }
-    return adcRead;
+////////////////////////////////////////////////////////////////////////////////
+
+void Init()
+{
+    InitPorts();
+    InitADC();
+    InitI2C();
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+//void InitPorts()
 /*
- * ------------------ R e q u e s t A N 0 () ---------------------------------------
- * Purpose:    Reads the analog value of AN0 and stores it in "int adc"
- * Parameters: None; But the ANCON and ANSEL registers should be setup before this method is called
- * Returns:    The new value of "int adc"
+        Purpose     : Initialize PIC PORTS for I/O Pins
+        Parameters  : N/A
+        Output      : N/A
 */
-unsigned int RequestAN0(){
+////////////////////////////////////////////////////////////////////////////////
 
-
-}
-
-
-/*
- * ----------------------- I n i t () ---------------------------------------
- * Initialize the board
- * Functions called:
- *  InitADC()
- */
-void Init(){
-    // Comparitors off, CxIN pins are configured as digital I/O
+void InitPorts()
+{
+    //Setup Port A to communicate with the ADC
+    // ANO (PIN 2) Input pin for ADC conversion.
+    TRISA = 0b11111111;     // PORTA bit 0 set 0 as output so AN0 can be the analog input voltage from photoresitor
 
     //Setup PortD to attach to the LED
     TRISD = 0b01111111;// PORTD bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
-
-    InitADC();
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
+//void InitADC()
 /*
- * ----------------------- I n i t A D C () ---------------------------------
- * Initialize any registers that the ADC needs for communication.
- */
-void InitADC(){
-    // ANO (PIN 2) Input pin for ADC conversion.
+        Purpose     : Initialize any registers that the ADC needs for communication.
+        Parameters  : N/A
+        Output      : N/A
+*/
+////////////////////////////////////////////////////////////////////////////////
 
-    //0. //Setup Port A to communicate with the ADC
-            TRISA = 0b11111111;     // PORTA bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
-
+void InitADC()
+{
     //1. Configure the RA0/AN0 pin as an analog input in ANSEL.
             ANSELbits.ANS0 = 1;     // Disable Digital Input Buffer for Analog select control bit. (Data Sheet PAGE )
 
@@ -124,27 +126,76 @@ void InitADC(){
 
     //4. Select the channel and turn on the ADC in ADCON0.
             ADCON0 = 0b00000001; // Not Used(7-6), Analog Channel select AN0 (5-2), A/D Conversion Status Bit (1), ADC Enable (0) (Data Sheet PAGE 271)
-
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//void InitI2C()
 /*
- * ----------------------- m a i n () ---------------------------------
- */
-void main(){	
-    unsigned adcRead = 0;
+        Purpose     : Initialize any registers that the I2C needs for communication.
+        Parameters  : N/A
+        Output      : N/A
+*/
+////////////////////////////////////////////////////////////////////////////////
 
-    //Initialize the board and all necesary ports
-    Init();
-    
-    while(1){
-        // Obtain ADC result
-        ReadADC(adcRead);
-        RequestAN0();
+void InitI2C()
+{
 
-        if (adcRead > 0){
-            LATDbits.LATD7 = 1;// Set LAT register bit 7 to turn on LED
-        }else{
-            LATDbits.LATD7 = 0;// Set LAT register bit 7 to turn on LED
-        }
+        //The address byte contains
+        //the 7 bit DS1307 address, which is 1101000, followed by the *direction bit (R/W ) which, for a write,
+        //is a 0.
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//void Start_Conversion()
+/*
+        Purpose     : Start an ADC conversion.
+        Parameters  : N/A
+        Output      : N/A
+*/
+////////////////////////////////////////////////////////////////////////////////
+
+void Start_Conversion()
+{
+    ADCON0bits.GO_DONE = 1; //Start Conversion.
+    while(ADCON0bits.GO_DONE) //While conversion is not completed. Loop.
+    {
+     Nop();  //Implement a delay structure.
+    }
+    Digital_Result = ADRESH;
+    Process_Digital_Result();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//void Process_Digital_Result()
+/*
+        Purpose     : Handle result of ADC conversion.
+        Parameters  : N/A
+        Output      : N/A
+*/
+////////////////////////////////////////////////////////////////////////////////
+
+void Process_Digital_Result()
+{
+    // Compared Digital_Result to an Value we choose.
+    // LED Will turn Off/On depending on comparision.
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//void main()
+/*
+        Purpose     : Main insertion into program.
+        Parameters  : N/A
+        Output      : N/A
+*/
+////////////////////////////////////////////////////////////////////////////////
+
+void main()
+{	
+    Init(); //Initialize the board and all necesary ports.
+    while(1) //Program loop.
+    {
+        Start_Conversion(); //Start a conversion.
+	//Get data from RTC (DS1307).
+	//Output the ADC conversion data and RTC data to LCD screen.
     }
 }

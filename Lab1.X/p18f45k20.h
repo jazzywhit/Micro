@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
- * MPLAB-Cxx  PIC18F44K20 processor header
+ * MPLAB-Cxx  PIC18F45K20 processor header
  *
  * (c) Copyright 1999-2011 Microchip Technology, All rights reserved
  *-------------------------------------------------------------------------*/
 
-#ifndef __18F44K20_H
-#define __18F44K20_H
+#ifndef __18F45K20_H
+#define __18F45K20_H
 
 extern volatile near unsigned char       SSPMSK;
 extern volatile near struct {
