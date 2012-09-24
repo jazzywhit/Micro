@@ -23,10 +23,9 @@
 //INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
 
-//#include "p18f45K20.h" //Not really needed, handled by the #define __18F45K20 and i2c.h header call.
-#include "i2c.h"
-#include "p18f45k20.h"
 
+#include <i2c.h>
+#include <p18F45K20.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 //PRAGMAS
@@ -48,7 +47,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 unsigned int Digital_Result = 0;
-unsigned char test='a';
 
 ////////////////////////////////////////////////////////////////////////////////
 //STRUCTURES
@@ -72,7 +70,6 @@ void Setup_Time_DS1307();
 void Start_Conversion();
 void Process_Digital_Result();
 void Read_Time_DS1307();
-void Read_Write_Once();
 
 ////////////////////////////////////////////////////////////////////////////////
 //void Init()
@@ -87,9 +84,9 @@ void Init()
 {
     InitPorts();
     InitADC();
-    InitI2C();
-    InitDS1307();
-    Setup_Time_DS1307();
+    //InitI2C();
+    //InitDS1307();
+    //Setup_Time_DS1307();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -107,15 +104,14 @@ void InitPorts()
     // ANO (PIN 2) Input pin for ADC conversion.
     TRISA = 0b11111111;     // PORTA bit 0 set 0 as output so AN0 can be the analog input voltage from photoresitor
 
-    TRISC = 0xFF; //turn on tri-state register and
+    TRISC = 0x00; //turn on tri-state register and
     //make all output pins
     PORTC = 0x00; //make all output pins LOW
 
     //Setup PortD to attach to the LED
     TRISD = 0b01111111;// PORTD bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
+
 }
-
-
 ////////////////////////////////////////////////////////////////////////////////
 //void InitADC()
 /*
@@ -153,7 +149,7 @@ void InitADC()
 void InitI2C()
 {
         //Functions we can use
-     //   OpenI2C(MASTER, SLEW_OFF); //SLEW_OFF since bus speed is not a concern.
+        OpenI2C(MASTER, SLEW_OFF); //SLEW_OFF since bus speed is not a concern.
         //DS1307
             /*
                 The address byte contains
@@ -215,6 +211,7 @@ void InitDS1307()
         Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
+
 void Start_Conversion()
 {
     ADCON0bits.GO_DONE = 1; //Start Conversion.
@@ -234,10 +231,13 @@ void Start_Conversion()
         Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
+
 void Process_Digital_Result()
 {
-    if(Digital_Result < 40) //If it is dark the voltage will be around (.3-.4)V
+    if(Digital_Result < 60) //If it is dark the voltage will be around (.3-.4)V
         PORTDbits.RD7 = 1; // LED Will turn Off/On depending on comparision.
+    else
+	PORTDbits.RD7 = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -248,7 +248,7 @@ void Process_Digital_Result()
         Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
-unsigned char sec, min, hr, month, year, date, day; //These may be better as global variables for LCD output.
+
 void Setup_Time_DS1307()
 {
     //Date and Time Variables
@@ -320,7 +320,7 @@ void Setup_Time_DS1307()
         Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
-unsigned char Sec=0, Min=0, Hrs=0, Mon=0, Year=0, Date=0, Day=0;
+
 void Read_Time_DS1307()
 {
      unsigned char Sec, Min, Hrs, Mon, Year, Date, Day;
@@ -397,57 +397,6 @@ void Read_Time_DS1307()
      
      StopI2C();
 }
-
-void Read_Write_Once()
-{
-    OpenI2C(MASTER,SLEW_OFF);
-    IdleI2C();
-    StartI2C();
-    IdleI2C();
-     if (!DataRdyI2C())
-       WriteI2C(0b11010000); //address of DS1307.
-
-    IdleI2C();
-     if (!DataRdyI2C())
-       WriteI2C(0x00); // Position the address pointer to 0.
-
-    IdleI2C();
-     if (!DataRdyI2C())
-       WriteI2C('c');
-
-    StopI2C();
-
-    StartI2C();
-
-    IdleI2C();
-
-    if (!DataRdyI2C())
-        WriteI2C(0b11010000); //address of DS1307.
-
-     IdleI2C();
-
-     if (!DataRdyI2C())
-        WriteI2C(0x00); // Position the address pointer to 0.
-
-     IdleI2C();
-
-     if (!DataRdyI2C())
-         WriteI2C(0b11010000 | 1); // Direction bit set to read.
-
-     IdleI2C();
-
-    //Receive Time Varaibles from DS1307
-
-     if (DataRdyI2C())
-         test = ReadI2C();
-
-     IdleI2C();
-     AckI2C();
-     IdleI2C();
-
-    StopI2C();
-
-}
 ////////////////////////////////////////////////////////////////////////////////
 //void main()
 /*
@@ -459,13 +408,11 @@ void Read_Write_Once()
 
 void main()
 {	
-    //Init(); //Initialize the board and all necesary ports.
-    Read_Write_Once();
-
-   
+    Init(); //Initialize the board and all necesary ports.
     while(1) //Program loop.
     {
         Start_Conversion(); //Start a conversion.
+        //PORTDbits.RD7 = 1;
 	//Read_Time_DS1307(); //Get data from RTC (DS1307).
 	//Output the ADC conversion data and RTC data to LCD screen.
     }
