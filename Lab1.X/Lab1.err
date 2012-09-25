@@ -1,6 +1,2 @@
-Warning[2058] C:\Users\students\Documents\Micro II\lab1 project files\test.X\Lab1.c 88 : call of function without prototype
-Warning[2058] C:\Users\students\Documents\Micro II\lab1 project files\test.X\Lab1.c 89 : call of function without prototype
-Warning[2058] C:\Users\students\Documents\Micro II\lab1 project files\test.X\Lab1.c 90 : call of function without prototype
-Warning[2058] C:\Users\students\Documents\Micro II\lab1 project files\test.X\Lab1.c 91 : call of function without prototype
-Warning[2058] C:\Users\students\Documents\Micro II\lab1 project files\test.X\Lab1.c 92 : call of function without prototype
-Warning[2058] C:\Users\students\Documents\Micro II\lab1 project files\test.X\Lab1.c 227 : call of function without prototype
+Warning[2058] C:\Users\students\Documents\GitHub\Micro\Lab1.X\Lab1.c 57 : call of function without prototype
+Error[yy] C:\Users\students\Documents\GitHub\Micro\Lab1.X\Lab1.c 62 : syntax error
