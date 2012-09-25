@@ -27,6 +27,11 @@
 #include <i2c.h>
 #include <p18F45K20.h>
 
+
+// PP Nibble tristate; allows setting all PP nibble
+//  bits as input or output simultaneously
+#define PPTRIS TRISA2=TRISC2=TRISC1=TRISC0
+
 ////////////////////////////////////////////////////////////////////////////////
 //PRAGMAS
 ////////////////////////////////////////////////////////////////////////////////
@@ -47,6 +52,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 unsigned int Digital_Result = 0;
+unsigned char Sec=0,Min=0, Hrs=0, Mon=0, Year=0, Date=0, Day=0;
 
 ////////////////////////////////////////////////////////////////////////////////
 //STRUCTURES
@@ -84,9 +90,9 @@ void Init()
 {
     InitPorts();
     InitADC();
-    //InitI2C();
-    //InitDS1307();
-    //Setup_Time_DS1307();
+    InitI2C();
+    InitDS1307();
+    Setup_Time_DS1307();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -112,6 +118,22 @@ void InitPorts()
     TRISD = 0b01111111;// PORTD bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
 
 }
+
+ void InitDS1307(){
+     unsigned char seconds = 0;
+
+     StartI2C();
+     WriteI2C(0xD0);
+     WriteI2C(0x00);
+     WriteI2C(0x03); //Write 3 to the 
+
+     StartI2C();
+     WriteI2C(0xD0);
+     WriteI2C(0x07);
+     WriteI2C(0x80);
+     StopI2C();
+
+ }
 ////////////////////////////////////////////////////////////////////////////////
 //void InitADC()
 /*
@@ -149,7 +171,33 @@ void InitADC()
 void InitI2C()
 {
         //Functions we can use
-        OpenI2C(MASTER, SLEW_OFF); //SLEW_OFF since bus speed is not a concern.
+        SSPADD = 0x09;
+        OSCCONbits.IRCF = 0b101;
+        OpenI2C(MASTER, SLEW_OFF);
+        //OSCCONbits.SCS = 0b00;
+
+        //while(1){
+        //    StartI2C();
+        //    WriteI2C(0xD0);
+        //    ReadI2C();
+        //}
+
+
+        //StartI2C(); //Begin the I2C Connection
+        //IdleI2C();
+
+        //WriteI2C( 0xD0 ); //Send an address to the clock
+        //IdleI2C();
+        
+        //while(1){
+        //AckI2C();
+        //IdleI2C();
+       // }
+  
+        //StopI2C();
+        //IdleI2C();
+//        I2C1_SCL = 1;               // Set SCL1 (PORTC,3) pin to input
+//        I2C1_SDA = 1;               // Set SDA1 (PORTC,4) pin to input
         //DS1307
             /*
                 The address byte contains
@@ -168,39 +216,6 @@ void InitI2C()
                 Either way, it?s a safe guard and it doesn?t hurt.
              */
 
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//void InitDS1307()
-/*
-        Purpose     : Initialize DS1307 for communication.
-        Parameters  : N/A
-        Output      : N/A
-*/
-////////////////////////////////////////////////////////////////////////////////
-
-void InitDS1307()
-{
-     StartI2C();
-
-     IdleI2C();
-
-     if (!DataRdyI2C())
-          WriteI2C(0b11010000); //address of DS1307.
-
-     IdleI2C();
-
-     if (!DataRdyI2C())
-         WriteI2C(0x00); // Position the address pointer to 0.
-
-     IdleI2C();
-
-     if (!DataRdyI2C())
-         WriteI2C(0x00); // Clear seconds register and CH bit.
-
-     IdleI2C();
-
-     StopI2C();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -254,61 +269,60 @@ void Setup_Time_DS1307()
     //Date and Time Variables
     //******** NEED TO BE CHANGED ******************
     unsigned char sec, min, hr, month, year, date, day; //These may be better as global variables for LCD output.
-    hr  = 0b01100111;   // Set to 12 hour format.
     min = 0b00000011;
-    sec = 0b00000000;   // Oscillator enabled.
-    day = 0b00000001;   // Set 1 = Sunday.
-    date= 0b00000001;   // Date set to 1st.
-    month = 0b00000001;   // Month set to January.
-    year= 0b00000100;   // Year set to 2008.
+    hr  = 0b01100111;   // Set to 12 hour format.
+    sec = 0b00000000;   // 
+    day = 0b00000100;   // Set 1 = Sunday.
+    date= 0b00010110;   // Date set to 1st.
+    month = 0b00001001;   // Month set to January.
+    year= 0b00010010;   // Year set to 2008.
 
     //Transmit Time and Date
-
     StartI2C();
-    IdleI2C();
-     if (!DataRdyI2C())
-       WriteI2C(0b11010000); //address of DS1307.
+    //IdleI2C();
+    //if (!DataRdyI2C()){
+     WriteI2C(0xD0); //address of DS1307. bit 0 indicates write(0) or read(1)
+       //IdleI2C();
+    //}
+     //if (!DataRdyI2C())
+     //    IdleI2C();
+      WriteI2C(0x00); // Position the address pointer to 0.
 
-    IdleI2C();
-     if (!DataRdyI2C())
-       WriteI2C(0x00); // Position the address pointer to 0.
+    //IdleI2C();
+    // if (!DataRdyI2C())
+      WriteI2C(sec);
 
-    IdleI2C();
-     if (!DataRdyI2C())
-       WriteI2C(sec);
+    //IdleI2C();
+    // if (!DataRdyI2C())
+      WriteI2C(min);
 
-    IdleI2C();
-     if (!DataRdyI2C())
-        WriteI2C(min);
+    //IdleI2C();
+    // if (!DataRdyI2C())
+      WriteI2C(hr);
 
-    IdleI2C();
-     if (!DataRdyI2C())
-       WriteI2C(hr);
+    //IdleI2C();
+   // if (!DataRdyI2C())
+      WriteI2C(day);
 
-    IdleI2C();
-    if (!DataRdyI2C())
-         WriteI2C(day);
+   //IdleI2C();
+   // if (!DataRdyI2C())
+      WriteI2C(date);
 
-   IdleI2C();
-    if (!DataRdyI2C())
-       WriteI2C(date);
+    //IdleI2C();
 
-    IdleI2C();
-
-    if (!DataRdyI2C())
+   // if (!DataRdyI2C())
        WriteI2C(month);
 
-    IdleI2C();
+    //IdleI2C();
 
-    if (!DataRdyI2C())
-        WriteI2C(year);
+   // if (!DataRdyI2C())
+       WriteI2C(year);
 
-    IdleI2C();
-    if (!DataRdyI2C())
-       WriteI2C(0x10); // Sets SQWE and selects 1Hz freq of Sqr Wave output.
+    //IdleI2C();
+       WriteI2C(0x80); // Disable Square Wave
+    //}
 
-    IdleI2C();
-
+    //IdleI2C();
     StopI2C();
 }
 
@@ -323,78 +337,95 @@ void Setup_Time_DS1307()
 
 void Read_Time_DS1307()
 {
-     unsigned char Sec, Min, Hrs, Mon, Year, Date, Day;
-
+    
      StartI2C();
+     //IdleI2C();
 
-     IdleI2C();
+     //if (!DataRdyI2C()){
+        WriteI2C(0xD0); //address of DS1307.
+    // }
 
-     if (!DataRdyI2C())
-        WriteI2C(0b11010000); //address of DS1307.
-
-     IdleI2C();
-
-     if (!DataRdyI2C())
         WriteI2C(0x00); // Position the address pointer to 0.
 
-     IdleI2C();
+        StartI2C();
+        WriteI2C(0xD1); //address of DS1307.
 
-     if (!DataRdyI2C())
-         WriteI2C(0b11010000 | 1); // Direction bit set to read.
+     //IdleI2C();
 
-     IdleI2C();
+     //if (!DataRdyI2C()){
+        //WriteI2C(0x00); // Position the address pointer to 0.
+     //   AckI2C();
+     //}
 
+     //IdleI2C();
+
+     //if (!DataRdyI2C()){
+     //    WriteI2C(0b11010000 | 1); // Direction bit set to read.
+     //    AckI2C();
+     //}
+
+     //IdleI2C();
     //Receive Time Varaibles from DS1307
 
-     if (DataRdyI2C())
+     //if (DataRdyI2C()){
          Sec = ReadI2C();
+         //AckI2C();
+     //}
 
-     IdleI2C();
-     AckI2C();
-     IdleI2C();
+     //IdleI2C();
+     //AckI2C();
+     //IdleI2C();
 
-     if (DataRdyI2C())
-         Min = ReadI2C();
+     //if (DataRdyI2C()){
+        Min = ReadI2C();
+        //AckI2C();
+     //}
 
-     IdleI2C();
-     AckI2C();
-     IdleI2C();
+     //IdleI2C();
+     //AckI2C();
+     //IdleI2C();
 
-     if (DataRdyI2C())
-         Hrs = ReadI2C();
+     //if (DataRdyI2C()){
+        Hrs = ReadI2C();
+     //    AckI2C();
+     //}
 
-     IdleI2C();
-     AckI2C();
-     IdleI2C();
+     //IdleI2C();
+     //AckI2C();
+     //IdleI2C();
 
-     if (DataRdyI2C())
-         Day = ReadI2C();
+     //if (DataRdyI2C()){
+         //Day = ReadI2C();
+      //   AckI2C();
+     //}
 
-     IdleI2C();
-     AckI2C();
-     IdleI2C();
+     //dleI2C();
+     //AckI2C();
+     //IdleI2C();
 
-     if (DataRdyI2C())
-         Date = ReadI2C();
+     //if (DataRdyI2C()){
+         //Date = ReadI2C();
+     //    AckI2C();
+     //}
 
-     IdleI2C();
-     AckI2C();
-     IdleI2C();
+     //IdleI2C();
+     //AckI2C();
+     //IdleI2C();
 
-     if (DataRdyI2C())
-         Mon = ReadI2C();
+     //if (DataRdyI2C()){
+         //Mon = ReadI2C();
+     //    AckI2C();
+     //}
 
-     IdleI2C();
-      AckI2C();
-     IdleI2C();
+     //IdleI2C();
+     // AckI2C();
+     //IdleI2C();
 
-     if (DataRdyI2C())
-          Year = ReadI2C();
+     //if (DataRdyI2C()){
+          //Year = ReadI2C();
+     //     AckI2C();
+     //}
 
-     IdleI2C();
-     NotAckI2C();
-     IdleI2C();
-     
      StopI2C();
 }
 ////////////////////////////////////////////////////////////////////////////////
@@ -412,8 +443,7 @@ void main()
     while(1) //Program loop.
     {
         Start_Conversion(); //Start a conversion.
-        //PORTDbits.RD7 = 1;
-	//Read_Time_DS1307(); //Get data from RTC (DS1307).
+	Read_Time_DS1307(); //Get data from RTC (DS1307).
 	//Output the ADC conversion data and RTC data to LCD screen.
     }
 }
