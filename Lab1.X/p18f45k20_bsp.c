@@ -33,8 +33,8 @@ void P18f45k20Init()
 {
     InitPorts();
     InitADC();
-    //InitI2C();
-    //InitDS1307();
+    InitI2C();
+    InitDS1307();
     //Setup_Time_DS1307();
 }
 

@@ -42,6 +42,7 @@ extern "C" {
 void P18f45k20Init();
 void InitPorts();
 void InitADC();
+void InitI2C();
 void ProcessDigitalResult(unsigned char *compare);
 unsigned char ReadADC();
 
