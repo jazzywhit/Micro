@@ -126,7 +126,7 @@ void InitPorts()
 {
     //Setup Port A to communicate with the ADC
     // ANO (PIN 2) Input pin for ADC conversion.
-    TRISA = 0b11111111;     // PORTA bit 0 set 0 as output so AN0 can be the analog input voltage from photoresitor
+    TRISA = 0b11111111;     // PORTA bit 0 set to 1 so AN0 can be the analog input voltage from light sensor
 
     TRISC = 0x00; //turn on tri-state register and
     //make all output pins
