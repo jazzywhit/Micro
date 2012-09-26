@@ -48,9 +48,9 @@ void P18f45k20Init()
 ////////////////////////////////////////////////////////////////////////////////
 void InitI2C()
 {
-    //Functions we can use
-    SSPADD = 0x09;
-    OSCCONbits.IRCF = 0b101;
+ 
+    SSPADD = 0x27; //This is the value given to us by the professor
+    OSCCONbits.IRCF = 0b111; //Setup as 16Mhz
     OpenI2C(MASTER, SLEW_OFF);
 
 }
@@ -128,8 +128,7 @@ void InitPorts()
     // ANO (PIN 2) Input pin for ADC conversion.
     TRISA = 0b11111111;     // PORTA bit 0 set 0 as output so AN0 can be the analog input voltage from photoresitor
 
-    TRISC = 0x00; //turn on tri-state register and
-    //make all output pins
+    TRISC = 0xFF; //turn on tri-state register. The pins should be set to input for the I2C bus.
     PORTC = 0x00; //make all output pins LOW
 
     //Setup PortD to attach to the LED
