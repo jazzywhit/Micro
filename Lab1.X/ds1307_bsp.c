@@ -88,8 +88,13 @@ void SetupTimeDS1307()
         Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
-void ReadTimeDS1307(unsigned char *seconds, unsigned char *minutes, unsigned char *hours,
-        unsigned char *day, unsigned char *date, unsigned char *month, unsigned char *year)
+void ReadTimeDS1307(unsigned char *seconds, 
+        unsigned char *minutes,
+        unsigned char *hours,
+        unsigned char *day,
+        unsigned char *date,
+        unsigned char *month,
+        unsigned char *year)
 {
     //Connect and reset stack pointer
     StartI2C();
