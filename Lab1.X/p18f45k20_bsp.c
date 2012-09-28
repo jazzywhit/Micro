@@ -48,15 +48,12 @@ void P18f45k20Init()
 ////////////////////////////////////////////////////////////////////////////////
 void InitI2C()
 {
-<<<<<<< HEAD
+
  
-    SSPADD = 0x27; //This is the value given to us by the professor
-    OSCCONbits.IRCF = 0b111; //Setup as 16Mhz
-=======
     //Functions we can use
     SSPADD = 0x27; //Fosc = 16 MHz , Fcy = 4 MHz , Fscl = 100 kHz
     OSCCONbits.IRCF = 0b111; //Internal Oscillator Frequency Select bits 111 = 16 MHz (HFINTOSC drives clock directly)
->>>>>>> Addition of comments
+
     OpenI2C(MASTER, SLEW_OFF);
 
 }
