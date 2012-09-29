@@ -54,8 +54,11 @@ void main()
     unsigned char month;
     unsigned char year;
 
-    P18f45k20Init(); //Initialize the board and all necesary ports.
+    //Setup_Time_DS1307(&seconds, &minutes, &hours, &day, &date, &month, &year);
 
+    P18f45k20Init(); //Initialize the board and all necesary ports.
+//-----------------------------------------------------------------NOTE THAT READ AND WRITE FUNCTIONS RETURN AN unsigned char, FOR ERROR CHECKING,
+//-----------------------------------------------------------------We could change the Program loop to acount for that
     while(1) //Program loop.
     {
         adcRead = ReadADC(); //Get the value from the ADC

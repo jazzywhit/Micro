@@ -34,8 +34,8 @@ void P18f45k20Init()
     InitPorts();
     InitADC();
     InitI2C();
-    InitDS1307();
-    //Setup_Time_DS1307();
+    //InitDS1307();
+    
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -49,7 +49,6 @@ void P18f45k20Init()
 void InitI2C()
 {
 
- 
     //Functions we can use
     SSPADD = 0x27; //Fosc = 16 MHz , Fcy = 4 MHz , Fscl = 100 kHz
     OSCCONbits.IRCF = 0b111; //Internal Oscillator Frequency Select bits 111 = 16 MHz (HFINTOSC drives clock directly)

@@ -28,9 +28,14 @@ extern "C" {
 #include <i2c.h>
 
 void InitDS1307();
-void SetupTimeDS1307();
-void ReadTimeDS1307(unsigned char *seconds, unsigned char *minutes, unsigned char *hours,
-        unsigned char *day, unsigned char *date, unsigned char *month, unsigned char *year);
+unsigned char SetupTimeDS1307();
+unsigned char ReadTimeDS1307(unsigned char *seconds,
+                             unsigned char *minutes,
+                             unsigned char *hours,
+                             unsigned char *day,
+                             unsigned char *date,
+                             unsigned char *month,
+                             unsigned char *year);
 
 #ifdef	__cplusplus
 }
