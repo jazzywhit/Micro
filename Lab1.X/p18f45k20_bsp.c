@@ -34,8 +34,6 @@ void P18f45k20Init()
     InitPorts();
     InitADC();
     InitI2C();
-    //InitDS1307();
-    
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -48,11 +46,9 @@ void P18f45k20Init()
 ////////////////////////////////////////////////////////////////////////////////
 void InitI2C()
 {
-
     //Functions we can use
     SSPADD = 0x27; //Fosc = 16 MHz , Fcy = 4 MHz , Fscl = 100 kHz
     OSCCONbits.IRCF = 0b111; //Internal Oscillator Frequency Select bits 111 = 16 MHz (HFINTOSC drives clock directly)
-
     OpenI2C(MASTER, SLEW_OFF);
 
 }
@@ -130,8 +126,7 @@ void InitPorts()
     // ANO (PIN 2) Input pin for ADC conversion.
     TRISA = 0b11111111;     // PORTA bit 0 set to 1 so AN0 can be the analog input voltage from light sensor
 
-    TRISC = 0xFF; //turn on tri-state register. The pins should be set to input for the I2C bus.
-    PORTC = 0x00; //make all output pins LOW
+    TRISC = 0x11111111; //turn on tri-state register. The pins should be set to input for the I2C bus.
 
     //Setup PortD to attach to the LED
     TRISD = 0b01111111;// PORTD bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)

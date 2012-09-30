@@ -71,21 +71,23 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     //Send the start condition
     IdleI2C();
     StartI2C();
-    while (SSPCON2bits.SEN); //Bit indicating start is still in progress
+    while (SSPCON2bits.SEN) continue; //Bit indicating start is still in progress
 
     //Send the address with the write bit set
     IdleI2C();
-    WriteI2C(DS1307_I2C_ADDRESS & 0xfe); //Bit 0 low for write
-    while (SSPSTATbits.R_W)
-        ;
+    WriteI2C(DS1307_I2C_ADDRESS & 0xFE); //Bit 0 low for write
+    while (SSPSTATbits.R_W){
+        continue;
+    }
     if (SSPCON2bits.ACKSTAT)
         goto SetupTimeDS1307_FAIL;
 
     //Send the register address
     IdleI2C();
     WriteI2C(0x00);
-    while (SSPSTATbits.R_W)
-        ;
+    while (SSPSTATbits.R_W) {
+        continue;
+    }
     if (SSPCON2bits.ACKSTAT)
         goto SetupTimeDS1307_FAIL;
 
@@ -97,8 +99,9 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     temp &= 0x7f; //Bit7 = enable oscillator
     IdleI2C();
     WriteI2C(temp);
-    while (SSPSTATbits.R_W)
-        ;
+    while (SSPSTATbits.R_W){
+        continue;
+    }
     if (SSPCON2bits.ACKSTAT)
         goto SetupTimeDS1307_FAIL;
 
@@ -110,8 +113,9 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     temp = (*minutes - (temp1 * 10)) + (temp1 << 4);
     IdleI2C();
     WriteI2C(temp);
-    while (SSPSTATbits.R_W)
-        ;
+    while (SSPSTATbits.R_W){
+        continue;
+    }
     if (SSPCON2bits.ACKSTAT)
         goto SetupTimeDS1307_FAIL;
 
@@ -121,11 +125,13 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
 
     temp1 = (*hours / 10);
     temp = (*hours - (temp1 * 10)) + (temp1 << 4);
-    temp &= 0x3f; //Bit6 low = set format to 24 hour
+    temp &= 0x3F; //Bit6 low = set format to 24 hour
     IdleI2C();
     WriteI2C(temp);
-    while (SSPSTATbits.R_W)
-        ;
+    while (SSPSTATbits.R_W){
+        continue;
+    }
+
     if (SSPCON2bits.ACKSTAT)
         goto SetupTimeDS1307_FAIL;
 
@@ -139,8 +145,10 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     temp = (*day - (temp1 * 10)) + (temp1 << 4);
     IdleI2C();
     WriteI2C(temp);
-    while (SSPSTATbits.R_W)
-        ;
+    while (SSPSTATbits.R_W){
+        continue;
+    }
+
     if (SSPCON2bits.ACKSTAT)
         goto SetupTimeDS1307_FAIL;
 
@@ -152,8 +160,10 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     temp = (*date - (temp1 * 10)) + (temp1 << 4);
     IdleI2C();
     WriteI2C(temp);
-    while (SSPSTATbits.R_W)
-        ;
+    while (SSPSTATbits.R_W){
+        continue;
+    }
+
     if (SSPCON2bits.ACKSTAT)
         goto SetupTimeDS1307_FAIL;
 
@@ -165,8 +175,10 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     temp = (*month - (temp1 * 10)) + (temp1 << 4);
     IdleI2C();
     WriteI2C(temp);
-    while (SSPSTATbits.R_W)
-        ;
+    while (SSPSTATbits.R_W){
+        continue;
+    }
+
     if (SSPCON2bits.ACKSTAT)
         goto SetupTimeDS1307_FAIL;
 
@@ -178,24 +190,29 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     temp = (*year - (temp1 * 10)) + (temp1 << 4);
     IdleI2C();
     WriteI2C(temp);
-    while (SSPSTATbits.R_W)
-        ;
+    while (SSPSTATbits.R_W){
+        continue;
+    }
+
     if (SSPCON2bits.ACKSTAT)
         goto SetupTimeDS1307_FAIL;
 
     //Write control
     IdleI2C();
     WriteI2C(0x00); //0x00 = square wave output off
-    while (SSPSTATbits.R_W)
-        ;
+    while (SSPSTATbits.R_W){
+        continue;
+    }
+
     if (SSPCON2bits.ACKSTAT)
         goto SetupTimeDS1307_FAIL;
 
     //Send Stop
     IdleI2C();
     StopI2C();
-    while (SSPCON2bits.PEN)
-        ;
+    while (SSPCON2bits.PEN){
+        continue;
+    }
 
     return (1);
 
@@ -205,8 +222,9 @@ SetupTimeDS1307_FAIL:
     //Send Stop
     IdleI2C();
     StopI2C();
-    while (SSPCON2bits.PEN)
-        ;
+    while (SSPCON2bits.PEN){
+        continue;
+    }
 
     return (0);
 }
@@ -238,78 +256,91 @@ unsigned char ReadTimeDS1307(unsigned char *seconds,
     //Send the start condition
     IdleI2C();
     StartI2C();
-    while (SSPCON2bits.SEN) //Bit indicating start is still in progress
-        ;
+    while (SSPCON2bits.SEN){
+        continue; //Bit indicating start is still in progress
+    }
 
     //Send the address with the write bit set
     IdleI2C();
-    WriteI2C(DS1307_I2C_ADDRESS & 0xfe); //Bit 0 low for write
-    while (SSPSTATbits.R_W) //Bit indicating transmit unsigned char is still in
-        ;
+    WriteI2C(DS1307_I2C_ADDRESS & 0xFE); //Bit 0 low for write
+    while (SSPSTATbits.R_W){
+        continue; //Bit indicating transmit unsigned char is still in
+    }
+
     if (SSPCON2bits.ACKSTAT) //Bit that is high when ACK was not received
         goto ReadTimeDS1307_FAIL;
 
     //Send the register address
     IdleI2C();
     WriteI2C(0x00);
-    while (SSPSTATbits.R_W)
-        ;
+    while (SSPSTATbits.R_W){
+        continue;
+    }
+
     if (SSPCON2bits.ACKSTAT)
         goto ReadTimeDS1307_FAIL;
 
     //Send restart condition
     IdleI2C();
     RestartI2C();
-    while (SSPCON2bits.RSEN) //Bit indicating re-start is still in
-        ;
+    while (SSPCON2bits.RSEN){
+        continue; //Bit indicating re-start is still in
+    }
 
     //Send the address with the read bit set
     IdleI2C();
     WriteI2C(DS1307_I2C_ADDRESS | 0x01); //Bit 1 high for read
-    while (SSPSTATbits.R_W)
-        ;
+    while (SSPSTATbits.R_W){
+        continue;
+    }
+
     if (SSPCON2bits.ACKSTAT)
         goto ReadTimeDS1307_FAIL;
 
     //Read seconds
     IdleI2C();
     temp = ReadI2C();
-    *seconds = (temp & 0x0f) + (((temp & 0x70) >> 4) * 10); //(Bit 7 is osc flag bit - dump)
+    *seconds = (temp & 0x0F) + (((temp & 0x70) >> 4) * 10); //(Bit 7 is osc flag bit - dump)
     AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)
-        ;
+    while (SSPCON2bits.ACKEN){
+        continue;
+    }
 
     //Read minutes
     IdleI2C();
     temp = ReadI2C();
     *minutes = (temp & 0x0f) + (((temp & 0x70) >> 4) * 10);
     AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)
-        ;
+    while (SSPCON2bits.ACKEN){
+        continue;
+    }
 
     //Read hours
     IdleI2C();
     temp = ReadI2C();
     *hours = (temp & 0x0f) + (((temp & 0x30) >> 4) * 10);
     AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)
-        ;
+    while (SSPCON2bits.ACKEN){
+        continue;
+    }
 
     //Read day
     IdleI2C();
     temp = ReadI2C();
     *day = (temp & 0x07);
     AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)
-        ;
+    while (SSPCON2bits.ACKEN){
+        continue;
+    }
 
     //Read date
     IdleI2C();
     temp = ReadI2C();
     *date = (temp & 0x0f) + (((temp & 0x30) >> 4) * 10);
     AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)
-        ;
+    while (SSPCON2bits.ACKEN){
+        continue;
+    }
 
     //Read month
     IdleI2C();
@@ -317,8 +348,9 @@ unsigned char ReadTimeDS1307(unsigned char *seconds,
     temp = ReadI2C();
     *month = (temp & 0x0f) + (((temp & 0x10) >> 4) * 10);
     AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)
-        ;
+    while (SSPCON2bits.ACKEN){
+        continue;
+    }
 
     //Read year
     IdleI2C();
@@ -331,14 +363,18 @@ unsigned char ReadTimeDS1307(unsigned char *seconds,
     //Send NAK
     IdleI2C();                                   // Reading is done, send NACK and stop
     NotAckI2C();
-    while (SSPCON2bits.ACKEN)
-        ;
+    while (SSPCON2bits.ACKEN){
+        continue;
+    }
 
     //Send Stop
     IdleI2C();
     StopI2C();
-    while (SSPCON2bits.PEN) //Bit indicating Stop is still in progress
-        ;
+    //Bit indicating Stop is still in progress
+    while (SSPCON2bits.PEN){
+      
+        continue;
+    }
 
     return (1);
 
@@ -356,8 +392,9 @@ ReadTimeDS1307_FAIL:
     //Send Stop
     IdleI2C();
     StopI2C();
-    while (SSPCON2bits.PEN)
-        ;
+    while (SSPCON2bits.PEN){
+        continue;
+    }
 
     return (0);
 

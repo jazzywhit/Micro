@@ -44,27 +44,26 @@
 */
 ////////////////////////////////////////////////////////////////////////////////
 
-    unsigned char adcRead = 0;
-    unsigned char seconds = 0;
-    unsigned char minutes = 0;
-    unsigned char hours = 0;
-    unsigned char day = 0;
-    unsigned char date = 0;
-    unsigned char month = 0;
-    unsigned char year = 0;
-      unsigned char test = 1;
+unsigned char adcRead = 0;
+unsigned char seconds = 0;
+unsigned char minutes = 24;
+unsigned char hours = 05;
+unsigned char day = 1;
+unsigned char date = 30;
+unsigned char month = 9;
+unsigned char year = 12;
+unsigned char test = 1;
+
 void main()
 {
 
-        P18f45k20Init(); //Initialize the board and all necesary ports.
+    P18f45k20Init(); //Initialize the board and all necesary ports.
 
+    SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year);
 
+    //NOTE THAT READ AND WRITE FUNCTIONS RETURN AN unsigned char, FOR ERROR CHECKING,
+    //We could change the Program loop to acount for that
 
-   test =  SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year);
-   if (!test) return 0;
-   
-//-----------------------------------------------------------------NOTE THAT READ AND WRITE FUNCTIONS RETURN AN unsigned char, FOR ERROR CHECKING,
-//-----------------------------------------------------------------We could change the Program loop to acount for that
     while(1) //Program loop.
     {
         adcRead = ReadADC(); //Get the value from the ADC
