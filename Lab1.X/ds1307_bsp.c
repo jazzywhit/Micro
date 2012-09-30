@@ -54,7 +54,7 @@
                     : Pointers are used for comanilty with rtc_get_time
                     : Uses 24 hour clock, not 12 hour
         Parameters  : N/A
-        Output      : N/A
+        Output      : 1 if sucessful, 0 if not.
 */
 ////////////////////////////////////////////////////////////////////////////////
 unsigned char SetupTimeDS1307(unsigned char *seconds,
