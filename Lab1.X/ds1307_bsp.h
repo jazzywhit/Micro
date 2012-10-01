@@ -29,6 +29,7 @@ extern "C" {
 
 void InitDS1307();
 unsigned char SetupTimeDS1307();
+void SetupTimeDS1307Fail();
 unsigned char ReadTimeDS1307(unsigned char *seconds,
                              unsigned char *minutes,
                              unsigned char *hours,

@@ -80,7 +80,7 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
         continue;
     }
     if (SSPCON2bits.ACKSTAT)
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     //Send the register address
     IdleI2C();
@@ -89,11 +89,11 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
         continue;
     }
     if (SSPCON2bits.ACKSTAT)
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     //Write seconds
     if (*seconds > 59) //Ensure value is in range
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
     temp1 = (*seconds / 10);
     temp = (*seconds - (temp1 * 10)) + (temp1 << 4);
     temp &= 0x7f; //Bit7 = enable oscillator
@@ -103,11 +103,11 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
         continue;
     }
     if (SSPCON2bits.ACKSTAT)
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     //Write minutes
     if (*minutes > 59) //Ensure value is in range
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     temp1 = (*minutes / 10);
     temp = (*minutes - (temp1 * 10)) + (temp1 << 4);
@@ -117,11 +117,11 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
         continue;
     }
     if (SSPCON2bits.ACKSTAT)
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     //Write hours
     if (*hours > 23) //Ensure value is in range
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     temp1 = (*hours / 10);
     temp = (*hours - (temp1 * 10)) + (temp1 << 4);
@@ -133,13 +133,13 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     }
 
     if (SSPCON2bits.ACKSTAT)
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     //Write day
     if (*day > 7) //Ensure value is in range
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
     if (*day == 0)
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     temp1 = (*day / 10);
     temp = (*day - (temp1 * 10)) + (temp1 << 4);
@@ -150,11 +150,11 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     }
 
     if (SSPCON2bits.ACKSTAT)
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     //Write date
     if (*date > 31) //Ensure value is in range
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     temp1 = (*date / 10);
     temp = (*date - (temp1 * 10)) + (temp1 << 4);
@@ -165,11 +165,11 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     }
 
     if (SSPCON2bits.ACKSTAT)
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     //Write month
     if (*month > 12) //Ensure value is in range
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     temp1 = (*month / 10);
     temp = (*month - (temp1 * 10)) + (temp1 << 4);
@@ -180,11 +180,11 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     }
 
     if (SSPCON2bits.ACKSTAT)
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     //Write year
     if (*year > 99) //Ensure value is in range
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     temp1 = (*year / 10);
     temp = (*year - (temp1 * 10)) + (temp1 << 4);
@@ -195,7 +195,7 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     }
 
     if (SSPCON2bits.ACKSTAT)
-        goto SetupTimeDS1307_FAIL;
+        SetupTimeDS1307Fail();         return(0);
 
     //Write control
     IdleI2C();
@@ -204,8 +204,9 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
         continue;
     }
 
-    if (SSPCON2bits.ACKSTAT)
-        goto SetupTimeDS1307_FAIL;
+    if (SSPCON2bits.ACKSTAT){
+        SetupTimeDS1307Fail();          return(0);
+    }
 
     //Send Stop
     IdleI2C();
@@ -215,9 +216,9 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     }
 
     return (1);
-
+}
     //----- I2C WRITE FAILED -----
-SetupTimeDS1307_FAIL:
+void SetupTimeDS1307Fail(){
 
     //Send Stop
     IdleI2C();
@@ -225,10 +226,7 @@ SetupTimeDS1307_FAIL:
     while (SSPCON2bits.PEN){
         continue;
     }
-
-    return (0);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //void ReadTimeDS1307()

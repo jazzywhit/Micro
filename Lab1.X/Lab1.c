@@ -46,7 +46,7 @@
 
 unsigned char adcRead = 0;
 unsigned char seconds = 0;
-unsigned char minutes = 24;
+unsigned char minutes = 25;
 unsigned char hours = 05;
 unsigned char day = 1;
 unsigned char date = 30;
@@ -58,17 +58,18 @@ void main()
 {
 
     P18f45k20Init(); //Initialize the board and all necesary ports.
-
-    SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year);
+    InitHD44780();  //Initialize the LCD Board
+    //SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year);
 
     //NOTE THAT READ AND WRITE FUNCTIONS RETURN AN unsigned char, FOR ERROR CHECKING,
     //We could change the Program loop to acount for that
 
     while(1) //Program loop.
     {
-        adcRead = ReadADC(); //Get the value from the ADC
-        ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
-	ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); //Get data from RTC (DS1307).
+        //adcRead = ReadADC(); //Get the value from the ADC
+        //ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
+	//ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); //Get data from RTC (DS1307).
+        TestDisplay();
 	//Output the ADC conversion data and RTC data to LCD screen.
     }
 }

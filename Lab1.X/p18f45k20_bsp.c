@@ -125,7 +125,6 @@ void InitPorts()
     //Setup Port A to communicate with the ADC
     // ANO (PIN 2) Input pin for ADC conversion.
     TRISA = 0b11111111;     // PORTA bit 0 set to 1 so AN0 can be the analog input voltage from light sensor
-
     TRISC = 0x11111111; //turn on tri-state register. The pins should be set to input for the I2C bus.
 
     //Setup PortD to attach to the LED
