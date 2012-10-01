@@ -20,30 +20,28 @@
 #include "ds1307_bsp.h"
 #define	DS1307_I2C_ADDRESS 0xd0
 
+
 ////////////////////////////////////////////////////////////////////////////////
-//void InitDS1307()
+//void WriteByte()
 /*
-        Purpose     : Setup Time in DS 1307
-        Parameters  : N/A
-        Output      : N/A
+        Purpose     : Writes a Byte to the RTC
+        Parameters  : The Byte that needs to be written
+        Output      : 1 if sucessful, 0 if not.
 */
 ////////////////////////////////////////////////////////////////////////////////
-//void InitDS1307(){
-//
-//     StartI2C();
-//     WriteI2C(0xD0);
-//     WriteI2C(0x00);
-//     WriteI2C(0x03); //Write 3 to the
-//
-//     StartI2C();
-//     WriteI2C(0xD0);
-//     WriteI2C(0x07);
-//     WriteI2C(0x80);
-//     StopI2C();
-//
-// }
-
-
+unsigned char WriteByte(unsigned char *byte){
+ //Send the address with the write bit set
+    IdleI2C();
+    WriteI2C(*byte); //Bit 0 low for write
+    while (SSPSTATbits.R_W){
+        continue;
+    }
+    if (SSPCON2bits.ACKSTAT){
+        SetupTimeDS1307Fail();
+        return(0);
+    }
+    return(1);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //void SetupTimeDS1307()
@@ -71,149 +69,97 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     //Send the start condition
     IdleI2C();
     StartI2C();
-    while (SSPCON2bits.SEN) continue; //Bit indicating start is still in progress
 
-    //Send the address with the write bit set
-    IdleI2C();
-    WriteI2C(DS1307_I2C_ADDRESS & 0xFE); //Bit 0 low for write
-    while (SSPSTATbits.R_W){
-        continue;
-    }
-    if (SSPCON2bits.ACKSTAT)
-        SetupTimeDS1307Fail();         return(0);
+    //Really not convinced that this is necessary...
+    while (SSPCON2bits.SEN)                     continue; //Bit indicating start is still in progress
 
-    //Send the register address
-    IdleI2C();
-    WriteI2C(0x00);
-    while (SSPSTATbits.R_W) {
-        continue;
-    }
-    if (SSPCON2bits.ACKSTAT)
-        SetupTimeDS1307Fail();         return(0);
+    if(!WriteByte(DS1307_I2C_ADDRESS & 0xFE))   return (0);
+    if(!WriteByte(0x00))                        return (0);
 
-    //Write seconds
+
+    //Check if the seconds are within range. If they are not, send the FAIL signal.
+    //Not entirely sure this is necessary. Could just return (0).
     if (*seconds > 59) //Ensure value is in range
-        SetupTimeDS1307Fail();         return(0);
+        SetupTimeDS1307Fail();                  return(0);
+
+    //Calculate the seconds.
     temp1 = (*seconds / 10);
     temp = (*seconds - (temp1 * 10)) + (temp1 << 4);
     temp &= 0x7f; //Bit7 = enable oscillator
-    IdleI2C();
-    WriteI2C(temp);
-    while (SSPSTATbits.R_W){
-        continue;
-    }
-    if (SSPCON2bits.ACKSTAT)
-        SetupTimeDS1307Fail();         return(0);
 
-    //Write minutes
+    //Write the seconds
+    if(!WriteByte(temp))                        return (0);
+
+    //Check if the minutes are within range. If they are not, send the FAIL signal.
+    //Same as seconds.. check if this is necessary.
     if (*minutes > 59) //Ensure value is in range
-        SetupTimeDS1307Fail();         return(0);
+        SetupTimeDS1307Fail();                  return(0);
 
+    //Calculate the minutes
     temp1 = (*minutes / 10);
     temp = (*minutes - (temp1 * 10)) + (temp1 << 4);
-    IdleI2C();
-    WriteI2C(temp);
-    while (SSPSTATbits.R_W){
-        continue;
-    }
-    if (SSPCON2bits.ACKSTAT)
-        SetupTimeDS1307Fail();         return(0);
 
-    //Write hours
+    //Write the minutes
+    if(!WriteByte(temp))                        return (0);
+
+    //Check if the hours are within range. If they are not, send the FAIL signal.
+    //Same as seconds.. check if this is necessary.
     if (*hours > 23) //Ensure value is in range
-        SetupTimeDS1307Fail();         return(0);
+        SetupTimeDS1307Fail();                  return(0);
 
     temp1 = (*hours / 10);
     temp = (*hours - (temp1 * 10)) + (temp1 << 4);
     temp &= 0x3F; //Bit6 low = set format to 24 hour
-    IdleI2C();
-    WriteI2C(temp);
-    while (SSPSTATbits.R_W){
-        continue;
-    }
 
-    if (SSPCON2bits.ACKSTAT)
-        SetupTimeDS1307Fail();         return(0);
+    //Write the Hours
+    if(!WriteByte(temp))                        return (0);
 
     //Write day
     if (*day > 7) //Ensure value is in range
-        SetupTimeDS1307Fail();         return(0);
+        SetupTimeDS1307Fail();                  return(0);
     if (*day == 0)
-        SetupTimeDS1307Fail();         return(0);
+        SetupTimeDS1307Fail();                  return(0);
 
     temp1 = (*day / 10);
     temp = (*day - (temp1 * 10)) + (temp1 << 4);
-    IdleI2C();
-    WriteI2C(temp);
-    while (SSPSTATbits.R_W){
-        continue;
-    }
-
-    if (SSPCON2bits.ACKSTAT)
-        SetupTimeDS1307Fail();         return(0);
+    
+    if(!WriteByte(temp))                        return (0);
 
     //Write date
     if (*date > 31) //Ensure value is in range
-        SetupTimeDS1307Fail();         return(0);
+        SetupTimeDS1307Fail();                  return(0);
 
     temp1 = (*date / 10);
     temp = (*date - (temp1 * 10)) + (temp1 << 4);
-    IdleI2C();
-    WriteI2C(temp);
-    while (SSPSTATbits.R_W){
-        continue;
-    }
 
-    if (SSPCON2bits.ACKSTAT)
-        SetupTimeDS1307Fail();         return(0);
+    if(!WriteByte(temp))                        return (0);
 
     //Write month
     if (*month > 12) //Ensure value is in range
-        SetupTimeDS1307Fail();         return(0);
+        SetupTimeDS1307Fail();                  return(0);
 
     temp1 = (*month / 10);
     temp = (*month - (temp1 * 10)) + (temp1 << 4);
-    IdleI2C();
-    WriteI2C(temp);
-    while (SSPSTATbits.R_W){
-        continue;
-    }
-
-    if (SSPCON2bits.ACKSTAT)
-        SetupTimeDS1307Fail();         return(0);
+    
+    if(!WriteByte(temp))                        return (0);
 
     //Write year
     if (*year > 99) //Ensure value is in range
-        SetupTimeDS1307Fail();         return(0);
+        SetupTimeDS1307Fail();                  return(0);
 
     temp1 = (*year / 10);
     temp = (*year - (temp1 * 10)) + (temp1 << 4);
-    IdleI2C();
-    WriteI2C(temp);
-    while (SSPSTATbits.R_W){
-        continue;
-    }
-
-    if (SSPCON2bits.ACKSTAT)
-        SetupTimeDS1307Fail();         return(0);
+    
+    if(!WriteByte(temp))                        return (0);
 
     //Write control
-    IdleI2C();
-    WriteI2C(0x00); //0x00 = square wave output off
-    while (SSPSTATbits.R_W){
-        continue;
-    }
+    //I don't recall this from the datagram. Check this against the datasheet.
+    if(!WriteByte(0x00))                        return (0);
 
-    if (SSPCON2bits.ACKSTAT){
-        SetupTimeDS1307Fail();          return(0);
-    }
-
-    //Send Stop
+    //Finish up
     IdleI2C();
     StopI2C();
-    while (SSPCON2bits.PEN){
-        continue;
-    }
+    while (SSPCON2bits.PEN)                     continue;
 
     return (1);
 }
