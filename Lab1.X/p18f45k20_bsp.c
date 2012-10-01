@@ -64,9 +64,8 @@ void InitI2C()
 unsigned char ReadADC()
 {
     ADCON0bits.GO_DONE = 1; //Start Conversion.
-    while(ADCON0bits.GO_DONE) //While conversion is not completed. Loop.
-    {
-     Nop();  //Implement a delay structure.
+    while(ADCON0bits.GO_DONE) {
+        continue ; //While conversion is not completed. Loop.
     }
     return ADRESH;
 }

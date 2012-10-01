@@ -61,9 +61,7 @@ void main()
     InitHD44780();  //Initialize the LCD Board
     //SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year);
 
-    //NOTE THAT READ AND WRITE FUNCTIONS RETURN AN unsigned char, FOR ERROR CHECKING,
-    //We could change the Program loop to acount for that
-
+   
     while(1) //Program loop.
     {
         //adcRead = ReadADC(); //Get the value from the ADC

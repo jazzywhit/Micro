@@ -27,6 +27,14 @@ extern "C" {
     
 #include <i2c.h>
 
+#define SECONDS 's'
+#define MINUTES 'm'
+#define HOURS 'h'
+#define DAY 'd'
+#define DATE 'D'
+#define MONTH 'M'
+#define YEAR 'Y'
+
 //Structure to define the DateTime in an easily accessible way.
 struct DateTime{
   unsigned char seconds;
@@ -50,7 +58,10 @@ unsigned char ReadTimeDS1307(unsigned char *seconds,
                              unsigned char *date,
                              unsigned char *month,
                              unsigned char *year);
-unsigned char WriteByte(unsigned char *byte);
+unsigned char WriteByte(unsigned char byte);
+void ReadByte(unsigned char *target, char type);
+unsigned char GetBCD( unsigned char binary , char type );
+unsigned char GetBinary( unsigned char binary , char type );
 
 #ifdef	__cplusplus
 }

@@ -1,21 +1,21 @@
 ////////////////////////////////////////////////////////////////////////////////
 /*
-    UMass Lowell 16.480/552, Fall 2012
+ UMass Lowell 16.480/552, Fall 2012
 
-    Purpose : 16.480 Microprocessors II Lab 1
-    File: ds1307_bsp.c
+ Purpose : 16.480 Microprocessors II Lab 1
+ File: ds1307_bsp.c
 
-    Group Name: Shoulda Been Gangstas
-    Group Members:
-        - Jesse Whitworth
-        - Matthew Cook
-        - Denis Lemos
-        - Aadil Hassan
+ Group Name: Shoulda Been Gangstas
+ Group Members:
+ - Jesse Whitworth
+ - Matthew Cook
+ - Denis Lemos
+ - Aadil Hassan
 
-    License: GNU GPLv3.
+ License: GNU GPLv3.
 
-    Date Created: 9-20-2012
-*/
+ Date Created: 9-20-2012
+ */
 ////////////////////////////////////////////////////////////////////////////////
 #include "ds1307_bsp.h"
 #define	DS1307_I2C_ADDRESS 0xd0
@@ -24,15 +24,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 //void WriteByte()
 /*
-        Purpose     : Writes a Byte to the RTC
-        Parameters  : The Byte that needs to be written
-        Output      : 1 if sucessful, 0 if not.
-*/
+ Purpose     : Writes a Byte to the RTC
+ Parameters  : The Byte that needs to be written
+ Output      : 1 if sucessful, 0 if not.
+ */
 ////////////////////////////////////////////////////////////////////////////////
-unsigned char WriteByte(unsigned char *byte){
- //Send the address with the write bit set
+unsigned char WriteByte(unsigned char byte){
+    //Send the address with the write bit set
     IdleI2C();
-    WriteI2C(*byte); //Bit 0 low for write
+    WriteI2C(byte); //Bit 0 low for write
     while (SSPSTATbits.R_W){
         continue;
     }
@@ -46,14 +46,14 @@ unsigned char WriteByte(unsigned char *byte){
 ////////////////////////////////////////////////////////////////////////////////
 //void SetupTimeDS1307()
 /*
-        Purpose     : Setup Time in DS 1307
-                    : The fields are converted from binary to BCD before being sent to the RTC
-                    : All fields are 0 - #, except day, date and month, which are 1 - #
-                    : Pointers are used for comanilty with rtc_get_time
-                    : Uses 24 hour clock, not 12 hour
-        Parameters  : N/A
-        Output      : 1 if sucessful, 0 if not.
-*/
+ Purpose     : Setup Time in DS 1307
+ : The fields are converted from binary to BCD before being sent to the RTC
+ : All fields are 0 - #, except day, date and month, which are 1 - #
+ : Pointers are used for comanilty with rtc_get_time
+ : Uses 24 hour clock, not 12 hour
+ Parameters  : N/A
+ Output      : 1 if sucessful, 0 if not.
+ */
 ////////////////////////////////////////////////////////////////////////////////
 unsigned char SetupTimeDS1307(unsigned char *seconds,
                               unsigned char *minutes,
@@ -62,9 +62,6 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
                               unsigned char *date,
                               unsigned char *month,
                               unsigned char *year) {
-
-    unsigned char temp;
-    unsigned char temp1;
 
     //Send the start condition
     IdleI2C();
@@ -82,37 +79,29 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     if (*seconds > 59) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
 
-    //Calculate the seconds.
-    temp1 = (*seconds / 10);
-    temp = (*seconds - (temp1 * 10)) + (temp1 << 4);
-    temp &= 0x7f; //Bit7 = enable oscillator
-
     //Write the seconds
-    if(!WriteByte(temp))                        return (0);
+    if(!WriteByte(GetBCD( *seconds , SECONDS )))                        return (0);
+
+
 
     //Check if the minutes are within range. If they are not, send the FAIL signal.
     //Same as seconds.. check if this is necessary.
     if (*minutes > 59) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
-
-    //Calculate the minutes
-    temp1 = (*minutes / 10);
-    temp = (*minutes - (temp1 * 10)) + (temp1 << 4);
-
     //Write the minutes
-    if(!WriteByte(temp))                        return (0);
+    if(!WriteByte(GetBCD( *minutes, MINUTES)))                        return (0);
+
+
 
     //Check if the hours are within range. If they are not, send the FAIL signal.
     //Same as seconds.. check if this is necessary.
     if (*hours > 23) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
 
-    temp1 = (*hours / 10);
-    temp = (*hours - (temp1 * 10)) + (temp1 << 4);
-    temp &= 0x3F; //Bit6 low = set format to 24 hour
-
     //Write the Hours
-    if(!WriteByte(temp))                        return (0);
+    if(!WriteByte(GetBCD( *hours , HOURS )))                        return (0);
+
+
 
     //Write day
     if (*day > 7) //Ensure value is in range
@@ -120,37 +109,32 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
     if (*day == 0)
         SetupTimeDS1307Fail();                  return(0);
 
-    temp1 = (*day / 10);
-    temp = (*day - (temp1 * 10)) + (temp1 << 4);
-    
-    if(!WriteByte(temp))                        return (0);
+    if(!WriteByte( GetBCD( *day , DAY )))                        return (0);
+
+
 
     //Write date
     if (*date > 31) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
 
-    temp1 = (*date / 10);
-    temp = (*date - (temp1 * 10)) + (temp1 << 4);
+    if(!WriteByte( GetBCD( *date, DATE )))                        return (0);
 
-    if(!WriteByte(temp))                        return (0);
+
 
     //Write month
     if (*month > 12) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
 
-    temp1 = (*month / 10);
-    temp = (*month - (temp1 * 10)) + (temp1 << 4);
-    
-    if(!WriteByte(temp))                        return (0);
+    if(!WriteByte( GetBCD( *month, MONTH )))                        return (0);
+
+
 
     //Write year
     if (*year > 99) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
 
-    temp1 = (*year / 10);
-    temp = (*year - (temp1 * 10)) + (temp1 << 4);
-    
-    if(!WriteByte(temp))                        return (0);
+    if(!WriteByte( GetBCD( *year , YEAR )))                        return (0);
+
 
     //Write control
     //I don't recall this from the datagram. Check this against the datasheet.
@@ -163,7 +147,7 @@ unsigned char SetupTimeDS1307(unsigned char *seconds,
 
     return (1);
 }
-    //----- I2C WRITE FAILED -----
+//----- I2C WRITE FAILED -----
 void SetupTimeDS1307Fail(){
 
     //Send Stop
@@ -174,17 +158,24 @@ void SetupTimeDS1307Fail(){
     }
 }
 
+void ReadByte(unsigned char *target, char type){
+    IdleI2C();
+    *target = GetBinary(ReadI2C(), type) ;
+    AckI2C(); //Send Ack
+    while (SSPCON2bits.ACKEN)                   continue;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //void ReadTimeDS1307()
 /*
-        Purpose     : Read Time from DS1307.
-                    : All fields are converted to binary values.
-                    : All fields are 0 - #, except day, date and month, which are 1 - #
-                    : Uses 24 hour clock, not 12 hour.
-        Parameters  : N/A
-        Output      : 1 if sucessful, 0 if not.
+ Purpose     : Read Time from DS1307.
+ : All fields are converted to binary values.
+ : All fields are 0 - #, except day, date and month, which are 1 - #
+ : Uses 24 hour clock, not 12 hour.
+ Parameters  : N/A
+ Output      : 1 if sucessful, 0 if not.
 
-*/
+ */
 ////////////////////////////////////////////////////////////////////////////////
 unsigned char ReadTimeDS1307(unsigned char *seconds,
                              unsigned char *minutes,
@@ -194,9 +185,6 @@ unsigned char ReadTimeDS1307(unsigned char *seconds,
                              unsigned char *month,
                              unsigned char *year) {
 
-    unsigned char temp;
-
-
     //Send the start condition
     IdleI2C();
     StartI2C();
@@ -204,25 +192,8 @@ unsigned char ReadTimeDS1307(unsigned char *seconds,
         continue; //Bit indicating start is still in progress
     }
 
-    //Send the address with the write bit set
-    IdleI2C();
-    WriteI2C(DS1307_I2C_ADDRESS & 0xFE); //Bit 0 low for write
-    while (SSPSTATbits.R_W){
-        continue; //Bit indicating transmit unsigned char is still in
-    }
-
-    if (SSPCON2bits.ACKSTAT) //Bit that is high when ACK was not received
-        goto ReadTimeDS1307_FAIL;
-
-    //Send the register address
-    IdleI2C();
-    WriteI2C(0x00);
-    while (SSPSTATbits.R_W){
-        continue;
-    }
-
-    if (SSPCON2bits.ACKSTAT)
-        goto ReadTimeDS1307_FAIL;
+    WriteByte(DS1307_I2C_ADDRESS & 0xFE);
+    WriteByte(0x00);
 
     //Send restart condition
     IdleI2C();
@@ -231,115 +202,140 @@ unsigned char ReadTimeDS1307(unsigned char *seconds,
         continue; //Bit indicating re-start is still in
     }
 
-    //Send the address with the read bit set
-    IdleI2C();
-    WriteI2C(DS1307_I2C_ADDRESS | 0x01); //Bit 1 high for read
-    while (SSPSTATbits.R_W){
-        continue;
-    }
+    WriteByte(DS1307_I2C_ADDRESS | 0x01);
 
-    if (SSPCON2bits.ACKSTAT)
-        goto ReadTimeDS1307_FAIL;
+    if (SSPCON2bits.ACKSTAT){
+        *seconds = 0;
+        *minutes = 0;
+        *hours = 0;
+        *day = 0;
+        *date = 1;
+        *month = 1;
+        *year = 0;
+
+        //Send Stop
+        IdleI2C();
+        StopI2C();
+        while (SSPCON2bits.PEN) {
+            continue;
+        }
+
+        return (0);
+
+    }
 
     //Read seconds
-    IdleI2C();
-    temp = ReadI2C();
-    *seconds = (temp & 0x0F) + (((temp & 0x70) >> 4) * 10); //(Bit 7 is osc flag bit - dump)
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN){
-        continue;
-    }
-
-    //Read minutes
-    IdleI2C();
-    temp = ReadI2C();
-    *minutes = (temp & 0x0f) + (((temp & 0x70) >> 4) * 10);
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN){
-        continue;
-    }
-
-    //Read hours
-    IdleI2C();
-    temp = ReadI2C();
-    *hours = (temp & 0x0f) + (((temp & 0x30) >> 4) * 10);
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN){
-        continue;
-    }
-
-    //Read day
-    IdleI2C();
-    temp = ReadI2C();
-    *day = (temp & 0x07);
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN){
-        continue;
-    }
-
-    //Read date
-    IdleI2C();
-    temp = ReadI2C();
-    *date = (temp & 0x0f) + (((temp & 0x30) >> 4) * 10);
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN){
-        continue;
-    }
-
-    //Read month
-    IdleI2C();
-    //  There was something here and on every other read that I have deleted but I think we don't need. I can get it back if necessary
-    temp = ReadI2C();
-    *month = (temp & 0x0f) + (((temp & 0x10) >> 4) * 10);
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN){
-        continue;
-    }
-
-    //Read year
-    IdleI2C();
-    temp = ReadI2C();
-    *year = (temp & 0x0f) + ((temp >> 4) * 10);
-    //AckI2C();		    //Send Ack           // Progression if read was to continue like
-    //while (SSPCON2bits.ACKEN)                  // in steps above, but we have read all
-    //	;                                        // the data we needed so skip these.
-
-    //Send NAK
-    IdleI2C();                                   // Reading is done, send NACK and stop
-    NotAckI2C();
-    while (SSPCON2bits.ACKEN){
-        continue;
-    }
+    ReadByte(seconds, SECONDS);
+    ReadByte(minutes, MINUTES);
+    ReadByte(hours, HOURS);
+    ReadByte(day, DAY);
+    ReadByte(date, DATE);
+    ReadByte(month, MONTH);
+    ReadByte(year, YEAR);
 
     //Send Stop
     IdleI2C();
     StopI2C();
     //Bit indicating Stop is still in progress
-    while (SSPCON2bits.PEN){
-      
-        continue;
-    }
+    while (SSPCON2bits.PEN)                         continue;
 
     return (1);
+}
 
-    //----- I2C READ FAILED -----
-ReadTimeDS1307_FAIL:
 
-    *seconds = 0;
-    *minutes = 0;
-    *hours = 0;
-    *day = 0;
-    *date = 1;
-    *month = 1;
-    *year = 0;
+unsigned char GetBinary(unsigned char bcd, char type) {
 
-    //Send Stop
-    IdleI2C();
-    StopI2C();
-    while (SSPCON2bits.PEN){
-        continue;
+    unsigned char binary;
+
+    switch (type) {
+        case SECONDS:
+            binary = (bcd & 0x0F) + (((bcd & 0x70) >> 4) * 10); //(Bit 7 is osc flag bit - dump)
+            break;
+
+        case MINUTES:
+            binary = (bcd & 0x0f) + (((bcd & 0x70) >> 4) * 10);
+            break;
+
+        case HOURS:
+            binary = (bcd & 0x0f) + (((bcd & 0x30) >> 4) * 10);
+            break;
+
+        case DAY:
+            binary = bcd & 0x07;
+            break;
+
+        case DATE:
+            binary = (bcd & 0x0f) + (((bcd & 0x30) >> 4) * 10);
+            break;
+
+        case MONTH:
+            binary = (bcd & 0x0f) + (((bcd & 0x10) >> 4) * 10);
+            break;
+
+        case YEAR:
+            binary = (bcd & 0x0f) + ((bcd >> 4) * 10);
+            break;
+
+        default:
+            return 0;
+            break;
     }
 
-    return (0);
+    return binary;
+
+}
+
+
+unsigned char GetBCD(unsigned char binary, char type) {
+
+    unsigned char bcd;
+    unsigned char byte;
+
+    switch (type) {
+        case SECONDS:
+            //Calculate the seconds.
+            byte = (binary / 10);
+            bcd = (binary - (byte * 10)) + (byte << 4);
+            bcd &= 0x7f; //Bit7 = enable oscillator
+            break;
+
+        case MINUTES:
+            //Calculate the minutes
+            byte = (binary / 10);
+            bcd = (binary - (byte * 10)) + (byte << 4);
+            break;
+
+        case HOURS:
+            byte = (binary / 10);
+            bcd = (binary - (byte * 10)) + (byte << 4);
+            bcd &= 0x3F; //Bit6 low = set format to 24 hour
+            break;
+
+        case DAY:
+            byte = (binary / 10);
+            bcd = (binary - (byte * 10)) + (byte << 4);
+            break;
+
+        case DATE:
+            byte = (binary / 10);
+            bcd = (binary - (byte * 10)) + (byte << 4);
+            break;
+
+        case MONTH:
+            byte = (binary / 10);
+            bcd = (binary - (byte * 10)) + (byte << 4);
+            break;
+
+        case YEAR:
+            byte = (binary / 10);
+            bcd = (binary - (byte * 10)) + (byte << 4);
+            break;
+
+        default:
+            return 0;
+            break;
+    }
+
+    return bcd;
 
 }
