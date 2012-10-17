@@ -1,0 +1,4 @@
+all:	prog
+
+prog:	prog.c
+	gcc -o prog prog.c
