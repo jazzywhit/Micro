@@ -10,10 +10,10 @@
 #define FALSE 0
 
 /* Parallel Port Constants */
-#define pport 0x378
-#define ppData pport
-#define ppStatus pport + 1
-#define ppStrobe pport + 2
+#define pport 0x378 //Base Address
+#define ppData pport 
+#define ppStatus pport + 1 //Status Register
+#define ppStrobe pport + 2 //Control Register
 #define MSG_RESET 0x0
 #define MSG_PING 0x1
 #define MSG_GET 0x2
@@ -46,8 +46,8 @@ int WriteByte(uchar byte){
 int ReadByte(uchar *byte){
 	uchar a, b;
 	while(ParPortRead(&a));
-	sleep(2);
-	while(ParPortRead(&b));
+	//sleep(2);
+	//while(ParPortRead(&b));
 	
 	*byte = a<<4 | b; //Reconstruct the two 4bit messages into a byte
 	return TRUE;
@@ -65,12 +65,23 @@ int ParPortRead(uchar *byte){
 
 int ParPortWrite(uchar byte){
 	outb(0x00, ppStrobe); //Set the strobe low
+	//printf("%X\n", inb(ppStrobe));
 	sleep(3);
-	outb(byte, ppData); //Send the data
 	outb(0x01, ppStrobe); //Set the strobe high
-	//usleep(10000);
 	sleep(3);
-	outb(0x00, ppStrobe);
+	outb(0x00, ppStrobe); //Set the strobe low
+	//printf("%X\n", inb(ppStrobe));
+	sleep(3);
+	outb(0x01, ppStrobe); //Set the strobe high
+	sleep(3);
+	//outb(0x01, ppStrobe); //Set the strobe low
+	//outb(byte, ppData); //Send the data	
+	//outb(0x01, ppStrobe); //Set the strobe high
+	//printf("%X\n", inb(ppStrobe));
+	//usleep(10000);
+	//sleep(3);
+	//outb(0x00, ppStrobe);
+	//printf("%X\n", inb(ppStrobe));
 	//Need to check for an ACK. This might require calling ParPortRead.
 	return TRUE;
 } 
@@ -97,7 +108,7 @@ int main(int argc, char *argv[]){
 
 	for(;i < 1; i++){
 		uchar a, b, c; 
-		WriteByte(dataHex); 	
+	ParPortWrite(dataHex); 	
 	
 		//a = inb(pport);	
 		//b = inb(pport+1);	
@@ -107,5 +118,3 @@ int main(int argc, char *argv[]){
 		//usleep(1000000);
 	}
 }
-
-
