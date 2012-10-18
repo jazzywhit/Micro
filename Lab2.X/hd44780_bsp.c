@@ -19,10 +19,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "hd44780_bsp.h"
-
-
+#define CLEAR_DISPLAY 0x01
 void InitHD44780(){
     OpenXLCD(FOUR_BIT & LINES_5X7); //Set 4bit communication with 5x7 characters on two lines.
+    WriteCmdXLCD(DON & CURSOR_OFF & BLINK_OFF);
+    WriteCmdXLCD(CLEAR_DISPLAY);
 }
 
 // 12 Nop to delay for 18 cycles.
@@ -41,23 +42,33 @@ void DelayFor18TCY(void){
     Nop();
 }
 
+void DelayPORXLCD(void){
+    //Delay1KTCYx(60);
+    Delay100TCYx(0xA0);   // 100TCY * 160
+    Delay100TCYx(0xA0);   // 100TCY * 160
+    Delay100TCYx(0xA0);   // 100TCY * 160
+    Delay100TCYx(0xA0);   // 100TCY * 160
+}
+
+void DelayXLCD(void){
+    //Delay1KTCYx(20);
+     Delay100TCYx(0x36);      // 100TCY * 54
+     Delay100TCYx(0x36);      // 100TCY * 54
+     Delay100TCYx(0x36);      // 100TCY * 54
+     Delay100TCYx(0x36);      // 100TCY * 54
+}
+
+
 void TestDisplay(){
+
     //char data[]="LCD Test";
     //OSCCON = 0x70;
     //while(!OSCCONbits.IOFS);
     //ADCON1=0x0F;
-    //WriteCmdXLCD(BLINK_OFF);
-    //WriteCmdXLCD(0x0C);
+    ///WriteCmdXLCD();
     //WriteCmdXLCD(0x06);
     //WriteCmdXLCD(0x01);
     
-    putsXLCD("HELLO WORLD");
+   //putsXLCD("HELLO WORLD");
     //WriteDataXLCD('Q');
-    
-    //WriteDataXLCD ('E');
-    //WriteDataXLCD ('N');
-    //WriteDataXLCD ('M');
-    //WriteDataXLCD ('C');
-    //WriteDataXLCD ('U');
-    while(1);
 }

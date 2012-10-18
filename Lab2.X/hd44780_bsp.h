@@ -31,8 +31,8 @@ extern "C" {
 
 void TestDisplay();
 void DelayFor18TCY(void);                   //Delay of 2ms
-void DelayPORXLCD(void){Delay1KTCYx(60);}   //Delay of 15ms //Cycles = (TimeDelay * Fosc) / 4
-void DelayXLCD(void){Delay1KTCYx(20);}      //Delay of 5ms
+void DelayPORXLCD(void);  //Delay of 15ms //Cycles = (TimeDelay * Fosc) / 4
+void DelayXLCD(void);    //Delay of 5ms
 
 
 #ifdef	__cplusplus
