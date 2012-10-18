@@ -66,7 +66,7 @@ void main()
     {
         adcRead = ReadADC(); //Get the value from the ADC
         ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
-	//.ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); //Get data from RTC (DS1307).
+	ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); //Get data from RTC (DS1307).
         //TestDisplay();
 	//Output the ADC conversion data and RTC data to LCD screen.
     }

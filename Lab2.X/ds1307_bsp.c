@@ -161,8 +161,6 @@ void SetupTimeDS1307Fail(){
 void ReadByte(unsigned char *target, char type){
     IdleI2C();
     *target = GetBinary(ReadI2C(), type) ;
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)                   continue;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -205,33 +203,32 @@ unsigned char ReadTimeDS1307(unsigned char *seconds,
     WriteByte(DS1307_I2C_ADDRESS | 0x01);
 
     if (SSPCON2bits.ACKSTAT){
-        *seconds = 0;
-        *minutes = 0;
-        *hours = 0;
-        *day = 0;
-        *date = 1;
-        *month = 1;
-        *year = 0;
-
-        //Send Stop
-        IdleI2C();
-        StopI2C();
-        while (SSPCON2bits.PEN) {
-            continue;
-        }
-
-        return (0);
-
+        SetupTimeDS1307Fail();
+        return 0;
     }
 
     //Read seconds
     ReadByte(seconds, SECONDS);
+    AckI2C(); //Send Ack
+    while (SSPCON2bits.ACKEN)                   continue;
     ReadByte(minutes, MINUTES);
+    AckI2C(); //Send Ack
+    while (SSPCON2bits.ACKEN)                   continue;
     ReadByte(hours, HOURS);
+    AckI2C(); //Send Ack
+    while (SSPCON2bits.ACKEN)                   continue;
     ReadByte(day, DAY);
+    AckI2C(); //Send Ack
+    while (SSPCON2bits.ACKEN)                   continue;
     ReadByte(date, DATE);
+    AckI2C(); //Send Ack
+    while (SSPCON2bits.ACKEN)                   continue;
     ReadByte(month, MONTH);
+    AckI2C(); //Send Ack
+    while (SSPCON2bits.ACKEN)                   continue;
     ReadByte(year, YEAR);
+    NotAckI2C(); //Send Ack
+    while (SSPCON2bits.ACKEN)                   continue;
 
     //Send Stop
     IdleI2C();
