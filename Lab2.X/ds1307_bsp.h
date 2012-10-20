@@ -58,7 +58,7 @@ unsigned char ReadTimeDS1307(unsigned char *seconds,
                              unsigned char *date,
                              unsigned char *month,
                              unsigned char *year);
-unsigned char WriteByte(unsigned char byte);
+//unsigned char WriteByte(unsigned char byte);
 void ReadByte(unsigned char *target, char type);
 unsigned char GetBCD( unsigned char binary , char type );
 unsigned char GetBinary( unsigned char binary , char type );

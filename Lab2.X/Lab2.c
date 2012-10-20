@@ -24,6 +24,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "p18f45k20_bsp.h" //Our own board support package
 #include "ds1307_bsp.h"
+#include "parallel_bsp.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //PRAGMAS
@@ -56,18 +57,16 @@ unsigned char test = 1;
 
 void main()
 {
-
     P18f45k20Init(); //Initialize the board and all necesary ports.
     InitHD44780();  //Initialize the LCD Board
     //SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year);
-
    
-    while(1) //Program loop.
+    while(1)
     {
         //adcRead = ReadADC(); //Get the value from the ADC
         //ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
 	//ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); //Get data from RTC (DS1307).
-        TestDisplay();
+        
 	//Output the ADC conversion data and RTC data to LCD screen.
     }
 }

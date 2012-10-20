@@ -50,7 +50,6 @@ void InitI2C()
     SSPADD = 0x27; //Fosc = 16 MHz , Fcy = 4 MHz , Fscl = 100 kHz
     OSCCONbits.IRCF = 0b111; //Internal Oscillator Frequency Select bits 111 = 16 MHz (HFINTOSC drives clock directly)
     OpenI2C(MASTER, SLEW_OFF);
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -70,60 +69,6 @@ unsigned char ReadADC()
     return ADRESH;
 }
 
-
-void ParallelStatus(){
-    /*To obtain the most recent ADC result:
-    1. The user application (on Atom) sends MSG_GET to the sensor;
-    2. The sensor will output three 4?bit nibbles for ADC value and 8?byte RTC
-    value to the embedded system, trigger by the ?Strobe? signal from the
-    parallel port; the user application (on x86) reads the three nibbles in
-    sequence;
-    3. The sensor responds with MSG_ACK to tell the user application that it
-    finishes reporting a pair of 10?bit ADC and timestamp. */
-
-    //We will be checking the port for the MSG_GET byte and if we get that we will start sending the ADC Value.
-    //3 nibbles and 8 bites.
-    return 0;
-}
-
-void ParallelRead(){
-    /*Figure 4 illustrates the five steps involved in a read operation from the computer
-    (although the timing diagram has the same pattern as Figure 3, there are differences
-    in the steps):
-    (1) The computer pulls the Strobe signal low to get ready for read operation
-
-    3
-    (2) The PIC microcontroller on the sensor device outputs a 4?bit value (either
-    MSG_ACK or portion of ADC value) when it sees a low on the strobe line.
-    (3) The computer raises the Strobe signal and starting reading the value from
-    the data bus. The PIC checks the Strobe signal and learns that the computer
-    has started reading the value.
-    (4) The computer pulls the Strobe signal low again to indicate that the value has
-    been read.
-    (5) The PIC microcontroller sees the Strobe pulled low and stops outputting the
-    4?bit value.
-    */
-    return;
-}
-
-void ParallelWrite(){
-
-    /*Figure 3. Write operation on the bus
- 
-    The steps (in Figure 3) involved in the write operation are as follows.
-    (1) The computer pulls the Strobe signal low. The PIC microcontroller gets ready
-    to read 4?bit command message.
-    (2) The computer outputs a command on the data bus
-    (3) The computer raises the Strobe signal to indicate the command is ready on
-    the bus. The PIC microcontroller starts reading the value (i.e. a command)
-    from the bus. The computer maintains the value for at least 10ms.
-    (4) The computer ends the write operation by pulling the Strobe signal to low
-    again. By this time, the PIC should have already finished reading the value.
-    (5) The computer stops putting the command on the bus. The write operation
-    concludes.
-    */
-    return;
-}
 ////////////////////////////////////////////////////////////////////////////////
 //void Process_Digital_Result()
 /*
