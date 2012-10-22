@@ -1,21 +1,21 @@
 ////////////////////////////////////////////////////////////////////////////////
 /*
-    UMass Lowell 16.480/552, Fall 2012
-
-    Purpose : 16.480 Microprocessors II Lab 1
-    File: Lab1.c
-
-    Group Name: Shoulda Been Gangstas
-    Group Members:
-        - Jesse Whitworth
-        - Matthew Cook
-        - Denis Lemos
-        - Aadil Hassan
-    
-    License: GNU GPLv3.
-    
-    Date Created: 9-20-2012
-*/
+ UMass Lowell 16.480/552, Fall 2012
+ 
+ Purpose : 16.480 Microprocessors II Lab 1
+ File: Lab1.c
+ 
+ Group Name: Shoulda Been Gangstas
+ Group Members:
+ - Jesse Whitworth
+ - Matthew Cook
+ - Denis Lemos
+ - Aadil Hassan
+ 
+ License: GNU GPLv3.
+ 
+ Date Created: 9-20-2012
+ */
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -38,10 +38,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 //void main()
 /*
-        Purpose     : Main insertion into program.
-        Parameters  : N/A
-        Output      : N/A
-*/
+ Purpose     : Main insertion into program.
+ Parameters  : N/A
+ Output      : N/A
+ */
 ////////////////////////////////////////////////////////////////////////////////
 
 unsigned char adcRead = 0;
@@ -59,13 +59,19 @@ void main()
     P18f45k20Init(); //Initialize the board and all necesary ports.
     InitHD44780();  //Initialize the LCD Board
     //SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year);
-   
+    
+
     while(1)
     {
-        adcRead = ReadADC(); //Get the value from the ADC
-        ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
-	ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); //Get data from RTC (DS1307).
+        // Strobe is normally high, wait for falling edge to proceede (Polling)
+        while(STROBE) continue;
         
-	//Output the ADC conversion data and RTC data to LCD screen.
+        if(!ReadCommand() ) return; // If ReadCommand returns 0 communication did not work
+        
+        // adcRead = ReadADC(); //Get the value from the ADC
+        //ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
+        //ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); //Get data from RTC (DS1307).
+        
+        //Output the ADC conversion data and RTC data to LCD screen.
     }
 }
