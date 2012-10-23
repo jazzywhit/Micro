@@ -64,15 +64,12 @@ void main()
 
     while(1)
     {
-        // Strobe is normally high, wait for falling edge to proceede (Polling)
-        while(STROBE) continue;
-        
-        if(!ReadCommand() ) return; // If ReadCommand returns 0 communication did not work
-        
-        // adcRead = ReadADC(); //Get the value from the ADC
+ 
+        //adcRead = ReadADC(); //Get the value from the ADC
         //ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
-        //ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); //Get data from RTC (DS1307).
-        
+        //ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year , &control); //Get data from RTC (DS1307).
+
+        if( STROBE) ReadCommand();
         //Output the ADC conversion data and RTC data to LCD screen.
     }
 }

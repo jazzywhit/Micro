@@ -45,16 +45,9 @@ BYTE ReadCommand(){
 
     BYTE command;
     BYTE success = FALSE;
-
-    //Wait for rising edge
-     while(!STROBE) continue ;
-
+  
     // Read Command
     command = ReadDataBus();
-
-    //Wait for falling edge
-    while(STROBE) continue ; // ---------------Might not be necessary if linux is much faster than pic
-
 
     switch ( command ) {
         case MSG_PING:
@@ -73,6 +66,9 @@ BYTE ReadCommand(){
             return FALSE ;
 
     }
+ 
+    //Wait for falling edge
+   while(STROBE) continue ;
 
     return success;
 }
@@ -87,9 +83,6 @@ BYTE SendAck( BYTE typeOfAck){
 //Purpose: Write 4-bits of data to bus.
 
 BYTE WriteData(BYTE Data){
-
-    //Wait for falling edge
-    while(STROBE) continue ;
 
     // Meanwhile Linux brings strobe high
     D3 = (Data >> 3) & 0x01;
@@ -133,51 +126,51 @@ BYTE LowNibble(BYTE byte){
 //Purpose: Handles the Get command operationg
 
 BYTE GetCMD(){
-
-    unsigned adcRead = 0;
-
-    adcRead = ReadADC(); //Get the value from the ADC
-    ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off // Might have to be modified for lab 2
-    ReadTimeDS1307(&RTCData.seconds,
-            &RTCData.minutes,
-            &RTCData.hours,
-            &RTCData.day,
-            &RTCData.date,
-            &RTCData.month,
-            &RTCData.year,
-            &RTCData.control); //Get data from RTC (DS1307).
-
-    // 3 ADC nibles-------------------------------------------ADC MUST BE RECONFIGURED TO 12 bit precision
-    // Manipulate unsigned into 3 nibbles
-    WriteData(0xFF);
-    WriteData(0xFF);
-    WriteData(0xFF);
-
-
-    // 8 RTC values
-     WriteData(HighNibble(RTCData.seconds));
-     WriteData(LowNibble(RTCData.seconds));
-
-     WriteData(HighNibble(RTCData.minutes));
-     WriteData(LowNibble(RTCData.minutes));
-
-     WriteData(LowNibble(RTCData.hours));
-     WriteData(LowNibble(RTCData.hours));
-
-     WriteData(LowNibble(RTCData.day));
-     WriteData(LowNibble(RTCData.day));
-
-     WriteData(LowNibble(RTCData.date));
-     WriteData(LowNibble(RTCData.date));
-
-     WriteData(LowNibble(RTCData.month));
-     WriteData(LowNibble(RTCData.month));
-
-     WriteData(LowNibble(RTCData.year));
-     WriteData(LowNibble(RTCData.year));
-
-     WriteData(LowNibble(RTCData.control));
-     WriteData(LowNibble(RTCData.control));
+//
+//    unsigned adcRead = 0;
+//
+//    adcRead = ReadADC(); //Get the value from the ADC
+//    ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off // Might have to be modified for lab 2
+////    ReadTimeDS1307(&RTCData.seconds,
+//            &RTCData.minutes,
+//            &RTCData.hours,
+//            &RTCData.day,
+//            &RTCData.date,
+//            &RTCData.month,
+//            &RTCData.year,
+//            &RTCData.control); //Get data from RTC (DS1307).
+//
+//    // 3 ADC nibles-------------------------------------------ADC MUST BE RECONFIGURED TO 12 bit precision
+//    // Manipulate unsigned into 3 nibbles
+//    WriteData(0xFF);
+//    WriteData(0xFF);
+//    WriteData(0xFF);
+//
+//
+//    // 8 RTC values
+//     WriteData(HighNibble(RTCData.seconds));
+//     WriteData(LowNibble(RTCData.seconds));
+//
+//     WriteData(HighNibble(RTCData.minutes));
+//     WriteData(LowNibble(RTCData.minutes));
+//
+//     WriteData(LowNibble(RTCData.hours));
+//     WriteData(LowNibble(RTCData.hours));
+//
+//     WriteData(LowNibble(RTCData.day));
+//     WriteData(LowNibble(RTCData.day));
+//
+//     WriteData(LowNibble(RTCData.date));
+//     WriteData(LowNibble(RTCData.date));
+//
+//     WriteData(LowNibble(RTCData.month));
+//     WriteData(LowNibble(RTCData.month));
+//
+//     WriteData(LowNibble(RTCData.year));
+//     WriteData(LowNibble(RTCData.year));
+//
+//     WriteData(LowNibble(RTCData.control));
+//     WriteData(LowNibble(RTCData.control));
 
 }
 
