@@ -21,72 +21,163 @@
 #include "ds1307_bsp.h"
 #include <p18f45k20.h>
 
+// Read Data Bus
+// Reads data from the parallel port data pins and reconstructs the value as a BYTE
 
-//Read Command
-//Purpose: Read 4 bits from the bus to conclude which command is being used.
+BYTE ReadDataBus(){
 
-unsigned char ReadCommand(){
+    BYTE readresult ;
 
-    unsigned char readresult;
-    
-    //See STROBE go H-->L-->H.
-    while(STROBE);
-    while(!STROBE);
-    
-    //Grab Data -- Not sure if this is correct.
+    //Grab data
     readresult |= 0x00 ;
     readresult |= (D3 << 3);
     readresult |= (D2 << 2);
     readresult |= (D1 << 1);
     readresult |= (D0);
 
-    //See STROBE go L.
-    while(STROBE);
-
     return readresult;
 }
 
+//Read Command
+//Purpose: Read 4 bits from the bus to conclude which command is being used.
+
+BYTE ReadCommand(){
+
+    BYTE command;
+    BYTE success = FALSE;
+
+    //Wait for rising edge
+     while(!STROBE) continue ;
+
+    // Read Command
+    command = ReadDataBus();
+
+    //Wait for falling edge
+    while(STROBE) continue ; // ---------------Might not be necessary if linux is much faster than pic
+
+
+    switch ( command ) {
+        case MSG_PING:
+            success = PingCMD();
+            break;
+        case MSG_RESET:
+            success = ResetCMD();
+            break;
+        case MSG_GET:
+            success = GetCMD();
+            break;
+        case MSG_NOTHING:
+            success = TRUE ;
+            break;
+        default:
+            return FALSE ;
+
+    }
+
+    return success;
+}
 //SendACK
 //Purpose: Send general acknowledgment
 
-void SendAck(){
-    WriteData(MSG_ACK);
+BYTE SendAck( BYTE typeOfAck){
+   return WriteData(typeOfAck);
 }
 
 //WriteData
 //Purpose: Write 4-bits of data to bus.
 
-void WriteData(unsigned char Data){
-    
-    //See STROBE go H-->L-->H.
-    while(STROBE);
-    while(!STROBE);
-    
+BYTE WriteData(BYTE Data){
+
+    //Wait for falling edge
+    while(STROBE) continue ;
+
+    // Meanwhile Linux brings strobe high
     D3 = (Data >> 3) & 0x01;
     D2 = (Data >> 2) & 0x01;
     D1 = (Data >> 1) & 0x01;
     D0 = (Data) & 0x01;
-    
-    //See STROBE go L.
-    while(STROBE);
+
+    //Wait for falling edge
+    while(STROBE) continue ;
+
+    return TRUE ; //COME UP WITH A TEST FOR SUCCESS HERE
 }
 
 //PingCMD
 //Purpose: Handles the Ping command operation
 
-void PingCMD(){
-    SendAck();
+BYTE PingCMD(){
+    return SendAck(MSG_PING);
+}
+
+//ResetCMD
+//Purpose: Handles the Reseet command operation
+
+BYTE ResetCMD(){
+   return SendAck(MSG_RESET);
+}
+
+
+BYTE HighNibble(BYTE byte){
+
+    return (byte>>4) & 0x0F ;
+}
+
+
+BYTE LowNibble(BYTE byte){
+
+    return  byte & 0x0F ;
 }
 
 //GetCMD
 //Purpose: Handles the Get command operationg
 
-void GetCMD(unsigned char ADCResult, RTCData * RTCD){
+BYTE GetCMD(){
+
+    unsigned adcRead = 0;
+
+    adcRead = ReadADC(); //Get the value from the ADC
+    ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off // Might have to be modified for lab 2
+    ReadTimeDS1307(&RTCData.seconds,
+            &RTCData.minutes,
+            &RTCData.hours,
+            &RTCData.day,
+            &RTCData.date,
+            &RTCData.month,
+            &RTCData.year,
+            &RTCData.control); //Get data from RTC (DS1307).
+
+    // 3 ADC nibles-------------------------------------------ADC MUST BE RECONFIGURED TO 12 bit precision
+    // Manipulate unsigned into 3 nibbles
+    WriteData(0xFF);
+    WriteData(0xFF);
+    WriteData(0xFF);
+
+
+    // 8 RTC values
+     WriteData(HighNibble(RTCData.seconds));
+     WriteData(LowNibble(RTCData.seconds));
+
+     WriteData(HighNibble(RTCData.minutes));
+     WriteData(LowNibble(RTCData.minutes));
+
+     WriteData(LowNibble(RTCData.hours));
+     WriteData(LowNibble(RTCData.hours));
+
+     WriteData(LowNibble(RTCData.day));
+     WriteData(LowNibble(RTCData.day));
+
+     WriteData(LowNibble(RTCData.date));
+     WriteData(LowNibble(RTCData.date));
+
+     WriteData(LowNibble(RTCData.month));
+     WriteData(LowNibble(RTCData.month));
+
+     WriteData(LowNibble(RTCData.year));
+     WriteData(LowNibble(RTCData.year));
+
+     WriteData(LowNibble(RTCData.control));
+     WriteData(LowNibble(RTCData.control));
 
 }
 
-
-void ResetCMD(){
-    P18f45k20Init();
-    SendAck();
-}
