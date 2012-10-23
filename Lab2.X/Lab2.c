@@ -58,10 +58,16 @@ void main()
 {
     //unsigned char CMDRead;
     P18f45k20Init(); //Initialize the board and all necesary ports.
-    InitHD44780();  //Initialize the LCD Board
+    //InitHD44780();  //Initialize the LCD Board
     //SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year);
     
+// Set data bus as input
+    TRISA &= 0b11100001;     // PORTA bit 1,2,3,4 -> Output
 
+    PORTAbits.RA1 = 0;
+    PORTAbits.RA2 = 1;
+    PORTAbits.RA3 = 1;
+    PORTAbits.RA4 = 1;
     while(1)
     {
  
@@ -69,7 +75,7 @@ void main()
         //ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
         //ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year , &control); //Get data from RTC (DS1307).
 
-        if( STROBE) ReadCommand();
+       // if( STROBE) ReadCommand();
         //Output the ADC conversion data and RTC data to LCD screen.
     }
 }

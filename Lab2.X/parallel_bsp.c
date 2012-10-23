@@ -28,6 +28,9 @@ BYTE ReadDataBus(){
 
     BYTE readresult ;
 
+    // Set data bus as input
+    TRISA |= 0b00011110;     // PORTA bit 1,2,3,4 -> Input
+
     //Grab data
     readresult |= 0x00 ;
     readresult |= (D3 << 3);
@@ -84,11 +87,21 @@ BYTE SendAck( BYTE typeOfAck){
 
 BYTE WriteData(BYTE Data){
 
-    // Meanwhile Linux brings strobe high
-    D3 = (Data >> 3) & 0x01;
-    D2 = (Data >> 2) & 0x01;
-    D1 = (Data >> 1) & 0x01;
-    D0 = (Data) & 0x01;
+
+    // Set data bus as input
+    TRISA &= 0b11100001;     // PORTA bit 1,2,3,4 -> Output
+
+    PORTAbits.RA1 = 0;
+    PORTAbits.RA2 = 1;
+    PORTAbits.RA3 = 1;
+    PORTAbits.RA4 = 1;
+//    // Meanwhile Linux brings strobe high
+//    D3 = (Data >> 3) & 0x01;
+//    D2 = (Data >> 2) & 0x01;
+//    D1 = (Data >> 1) & 0x01;
+//    D0 = (Data) & 0x01;
+
+
 
     //Wait for falling edge
     while(STROBE) continue ;
