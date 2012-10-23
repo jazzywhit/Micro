@@ -56,16 +56,17 @@ unsigned char test = 1;
 
 void main()
 {
+    //unsigned char CMDRead;
     P18f45k20Init(); //Initialize the board and all necesary ports.
     InitHD44780();  //Initialize the LCD Board
     //SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year);
    
     while(1)
     {
-        adcRead = ReadADC(); //Get the value from the ADC
-        ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
-	ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); //Get data from RTC (DS1307).
-        
+        //adcRead = ReadADC(); //Get the value from the ADC
+        //ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
+	//ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); //Get data from RTC (DS1307).
+        //CMDRead = ReadCommand();
 	//Output the ADC conversion data and RTC data to LCD screen.
     }
 }

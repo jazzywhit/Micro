@@ -34,13 +34,13 @@ extern "C" {
 #define ACKPIN PORTEbits.RE1
 
 //Parallel Port Commands
-#define RESETCMD 0x0
-#define PINGCMD 0x1
-#define GETCMD 0x2
-#define NOTHINGCMD 0xF
+#define MSG_RESET 0x0
+#define MSG_PING 0x1
+#define MSG_CMD 0x2
+#define MSG_NOTHING 0xF
 
 //Parallel Reply Messages
-#define ACKMSG 0xE
+#define MSG_ACK 0xE
 
 //Structure to define the DateTime in an easily accessible way.
 typedef struct{

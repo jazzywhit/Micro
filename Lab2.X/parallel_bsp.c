@@ -50,7 +50,7 @@ unsigned char ReadCommand(){
 //Purpose: Send general acknowledgment
 
 void SendAck(){
-    WriteData(ACKMSG);
+    WriteData(MSG_ACK);
 }
 
 //WriteData
