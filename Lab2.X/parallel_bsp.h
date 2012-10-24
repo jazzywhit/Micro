@@ -25,30 +25,28 @@
 extern "C" {
 #endif
     
-    // Define data type
-    typedef unsigned char BYTE ;
+// Define data type
+typedef unsigned char BYTE ;
     
-    
-    
-    //Custom Parallel Port Bus Interface.
-#define D0 PORTAbits.RA1
-#define D1 PORTAbits.RA2
-#define D2 PORTAbits.RA3
-#define D3 PORTAbits.RA4
-#define STROBE PORTEbits.RE0
-#define ACKPIN PORTEbits.RE1
+//Custom Parallel Port Bus Interface.
+#define D0 PORTDbits.RD0
+#define D1 PORTDbits.RD1
+#define D2 PORTDbits.RD2
+#define D3 PORTDbits.RD3
+#define STROBE PORTDbits.RD5
+//#define ACKPIN PORTCbits.RD7
     
 #define TRUE 1
 #define FALSE 0
     
     //Parallel Port Commands
-#define MSG_RESET 0x0
-#define MSG_PING 0x1
-#define MSG_GET 0x2
-#define MSG_NOTHING 0xF
-    
+#define MSG_RESET 0x00
+#define MSG_PING 0x01
+#define MSG_GET 0x02
+#define MSG_NOTHING 0x0F
+
     //Parallel Reply Messages
-#define MSG_ACK 0xE
+#define MSG_ACK 0x0E
     
     //Structure to define the DateTime in an easily accessible way.
     typedef struct{
@@ -63,13 +61,14 @@ extern "C" {
     }RTCData;
     
     //Functions
-    BYTE ReadCommand();
+    void ReadCommand();
     BYTE SendAck( BYTE tyepOfAck ); //Send Acknowledgment Message
     BYTE WriteData(BYTE Data); //Write 4 bit data on the bus
     BYTE PingCMD(); //Handle PING
     BYTE GetCMD();//Handle GET
     BYTE ResetCMD(); //Handle RESET
-    
+
+
     
 #ifdef	__cplusplus
 }

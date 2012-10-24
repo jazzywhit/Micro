@@ -1,19 +1,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 /*
  UMass Lowell 16.480/552, Fall 2012
- 
+
  Purpose : 16.480 Microprocessors II Lab 1
  File: Lab1.c
- 
+
  Group Name: Shoulda Been Gangstas
  Group Members:
  - Jesse Whitworth
  - Matthew Cook
  - Denis Lemos
  - Aadil Hassan
- 
+
  License: GNU GPLv3.
- 
+
  Date Created: 9-20-2012
  */
 ////////////////////////////////////////////////////////////////////////////////
@@ -22,11 +22,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 //INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
-#include "p18f45k20_bsp.h" //Our own board support package
-#include "ds1307_bsp.h"
-#include "parallel_bsp.h"
-
-////////////////////////////////////////////////////////////////////////////////
+#include <p18f45k20.h>
+///////////////////////////////////////////////////////////////////////////////
 //PRAGMAS
 ////////////////////////////////////////////////////////////////////////////////
 #pragma config FOSC = INTIO67
@@ -52,32 +49,44 @@ unsigned char day = 1;
 unsigned char date = 30;
 unsigned char month = 9;
 unsigned char year = 12;
+unsigned char test = 1;
+
 void main()
 {
     //unsigned char CMDRead;
-    //P18f45k20Init(); //Initialize the board and all necesary ports.
+   // P18f45k20Init(); //Initialize the board and all necesary ports.
     //InitHD44780();  //Initialize the LCD Board
     //SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year);
-    TRISD &= 0b11110000;     // PORTA bit RC0,RC1,RC2,RC5 -> Output
 
+// Set data bus as input
+    TRISA &= 0b11100001;     // PORTA bit 1,2,3,4 -> Output
+
+    PORTAbits.RA1 = 0;
+    PORTAbits.RA2 = 1;
+    PORTAbits.RA3 = 1;
+    PORTAbits.RA4 = 1;
+
+        TRISC &= 0b11100001;     // PORTA bit 1,2,3,4 -> Output
+
+    PORTCbits.RC1 = 0;
+    PORTCbits.RC2 = 1;
+    PORTCbits.RC3 = 1;
+    PORTCbits.RC4 = 1;
+
+            TRISB &= 0b11100001;     // PORTA bit 1,2,3,4 -> Output
+
+    PORTBbits.RB1 = 0;
+    PORTBbits.RB2 = 1;
+    PORTBbits.RB3 = 1;
+    PORTBbits.RB4 = 1;
     while(1)
     {
 
         //adcRead = ReadADC(); //Get the value from the ADC
         //ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
         //ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year , &control); //Get data from RTC (DS1307).
-        ReadCommand();
 
-//        PORTDbits.RD0 = 0;
-//        PORTDbits.RD1 = 1;
-//        PORTDbits.RD2 = 1;
-//        PORTDbits.RD3 = 1;
-        //WriteData(MSG_ACK);
-        //WriteData(0);
-
-        // Set data bus as output
-        //TRISC &= 0xFF;     // PORTA bit RC0,RC1,RC2,RC5 -> Output
-
-//        //Output the ADC conversion data and RTC data to LCD screen.
+       // if( STROBE) ReadCommand();
+        //Output the ADC conversion data and RTC data to LCD screen.
     }
 }
