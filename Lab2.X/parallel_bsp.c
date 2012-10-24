@@ -31,10 +31,10 @@ BYTE ReadDataBus(){
 
     readResult = 0;
     //Grab data
-    readResult = (D3 << 3);
-    readResult = (D2 << 2);
-    readResult = (D1 << 1);
-    readResult = (D0);
+    readResult = (PortD3 << 3);
+    readResult = (PortD2 << 2);
+    readResult = (PortD1 << 1);
+    readResult = (PortD0);
 
     readResult &= 0x0F;
 
@@ -46,12 +46,6 @@ BYTE ReadDataBus(){
 //When Strobe is low
 void ReadCommand(){
 
-    // Set data bus as input
-    //TRISD |= 0b00100111;     // PORTc bit 0,1,2,5 -> Input
-    //TRISD &= 0b11110000;
-    //TRISD &= 0b11110000;     // PORTA bit RC0,RC1,RC2,RC5 -> Output
-    //WriteData(MSG_ACK);
-
     if(STROBE){
         BYTE command = 0;
 
@@ -59,21 +53,23 @@ void ReadCommand(){
 
         //Read the command from the bus.
         command = ReadDataBus();
-        //TRISD &= 0b11110000;     // PORTA bit RC0,RC1,RC2,RC5 -> Output
 
         while(!STROBE) continue;
 
          switch ( command ) {
             case MSG_PING:
-                //TRISD &= 0b11110000;     // PORTA bit RC0,RC1,RC2,RC5 -> Output
-                while(STROBE) WriteData(MSG_ACK);
-                //TRISD &= 0b11111111;     // PORTA bit RC0,RC1,RC2,RC5 -> Output
+                SendAck(MSG_ACK_PING);
+                while(STROBE) continue;
                 break;
             case MSG_RESET:
-                ResetCMD();
+                SendAck(MSG_ACK_RESET);
+                //Reset Data or something.
+                while(STROBE) continue;
                 break;
             case MSG_GET:
-                GetCMD();
+                SendAck(MSG_ACK_GET);
+                //GetCMD();
+                while(STROBE) continue;
                 break;
             case MSG_NOTHING:
                 TRUE ;
@@ -82,47 +78,39 @@ void ReadCommand(){
                 return FALSE ;
         }
     }
+
 }
 
 //SendACK
 //Purpose: Send general acknowledgment
-BYTE SendAck( BYTE typeOfAck){
-   return WriteData(typeOfAck);
+BYTE SendAck( BYTE msgType){
+    //Select statemtn for the type of ACK.
+//    D3 = ((typeOfAck >> 3) & 1);
+//    D2 = ((typeOfAck >> 2) & 1);
+//    D1 = ((typeOfAck >> 1) & 1);
+//    D0 = ((typeOfAck) & 1);
+    WriteData(msgType);
 }
 
 //WriteData
 //Purpose: Write 4-bits of data to bus.
-BYTE WriteData(BYTE Data){
+BYTE WriteData(BYTE data){
 
     //while(!STROBE);
     // Set data bus as output
     //TRISC = 0x0;
-    PORTDbits.RD0 = 0;
-    PORTDbits.RD1 = 1;
-    PORTDbits.RD2 = 1;
-    PORTDbits.RD3 = 1;
-//    D3 = ((Data >> 3) & 1);
-//    D2 = ((Data >> 2) & 1);
-//    D1 = ((Data >> 1) & 1);
-//    D0 = ((Data) & 1);
+//    PORTDbits.RD0 = 0;;
+//    PORTDbits.RD1 = 1;
+//    PORTDbits.RD2 = 1;
+//    PORTDbits.RD3 = 1;
+    PortD3 = ((data >> 3) & 1);
+    PortD2 = ((data >> 2) & 1);
+    PortD1 = ((data >> 1) & 1);
+    PortD0 = ((data) & 1);
 
     //while(STROBE);
     //Wait for falling edge
     return TRUE ; //COME UP WITH A TEST FOR SUCCESS HERE
-}
-
-//PingCMD
-//Purpose: Handles the Ping command operation
-
-BYTE PingCMD(){
-    return SendAck(MSG_PING);
-}
-
-//ResetCMD
-//Purpose: Handles the Reseet command operation
-
-BYTE ResetCMD(){
-   return SendAck(MSG_RESET);
 }
 
 

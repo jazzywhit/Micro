@@ -29,10 +29,10 @@ extern "C" {
 typedef unsigned char BYTE ;
     
 //Custom Parallel Port Bus Interface.
-#define D0 PORTDbits.RD0
-#define D1 PORTDbits.RD1
-#define D2 PORTDbits.RD2
-#define D3 PORTDbits.RD3
+#define PortD0 PORTDbits.RD0
+#define PortD1 PORTDbits.RD1
+#define PortD2 PORTDbits.RD2
+#define PortD3 PORTDbits.RD3
 #define STROBE PORTDbits.RD5
 //#define ACKPIN PORTCbits.RD7
     
@@ -40,9 +40,12 @@ typedef unsigned char BYTE ;
 #define FALSE 0
     
     //Parallel Port Commands
-#define MSG_RESET 0x00
+#define MSG_RESET 0x03
+#define MSG_ACK_RESET 0x0D
 #define MSG_PING 0x01
+#define MSG_ACK_PING 0x0E
 #define MSG_GET 0x02
+#define MSG_ACK_GET 0x0C
 #define MSG_NOTHING 0x0F
 
     //Parallel Reply Messages
