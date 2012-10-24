@@ -24,82 +24,90 @@
 // Read Data Bus
 // Reads data from the parallel port data pins and reconstructs the value as a BYTE
 
+BYTE readResult ;
+unsigned char test = 1;
+
 BYTE ReadDataBus(){
 
-    BYTE readresult ;
-
+    readResult = 0;
     //Grab data
-    readresult |= 0x00 ;
-    readresult |= (D3 << 3);
-    readresult |= (D2 << 2);
-    readresult |= (D1 << 1);
-    readresult |= (D0);
+    readResult = (D3 << 3);
+    readResult = (D2 << 2);
+    readResult = (D1 << 1);
+    readResult = (D0);
 
-    return readresult;
+    readResult &= 0x0F;
+
+    return readResult;
 }
 
 //Read Command
 //Purpose: Read 4 bits from the bus to conclude which command is being used.
+//When Strobe is low
+void ReadCommand(){
 
-BYTE ReadCommand(){
+    // Set data bus as input
+    //TRISD |= 0b00100111;     // PORTc bit 0,1,2,5 -> Input
+    //TRISD &= 0b11110000;
+    //TRISD &= 0b11110000;     // PORTA bit RC0,RC1,RC2,RC5 -> Output
+    //WriteData(MSG_ACK);
 
-    BYTE command;
-    BYTE success = FALSE;
+    if(STROBE){
+        BYTE command = 0;
 
-    //Wait for rising edge
-     while(!STROBE) continue ;
+        while(STROBE) continue;
 
-    // Read Command
-    command = ReadDataBus();
+        //Read the command from the bus.
+        command = ReadDataBus();
+        //TRISD &= 0b11110000;     // PORTA bit RC0,RC1,RC2,RC5 -> Output
 
-    //Wait for falling edge
-    while(STROBE) continue ; // ---------------Might not be necessary if linux is much faster than pic
+        while(!STROBE) continue;
 
-
-    switch ( command ) {
-        case MSG_PING:
-            success = PingCMD();
-            break;
-        case MSG_RESET:
-            success = ResetCMD();
-            break;
-        case MSG_GET:
-            success = GetCMD();
-            break;
-        case MSG_NOTHING:
-            success = TRUE ;
-            break;
-        default:
-            return FALSE ;
-
+         switch ( command ) {
+            case MSG_PING:
+                //TRISD &= 0b11110000;     // PORTA bit RC0,RC1,RC2,RC5 -> Output
+                while(STROBE) WriteData(MSG_ACK);
+                //TRISD &= 0b11111111;     // PORTA bit RC0,RC1,RC2,RC5 -> Output
+                break;
+            case MSG_RESET:
+                ResetCMD();
+                break;
+            case MSG_GET:
+                GetCMD();
+                break;
+            case MSG_NOTHING:
+                TRUE ;
+                break;
+            default:
+                return FALSE ;
+        }
     }
-
-    return success;
 }
+
 //SendACK
 //Purpose: Send general acknowledgment
-
 BYTE SendAck( BYTE typeOfAck){
    return WriteData(typeOfAck);
 }
 
 //WriteData
 //Purpose: Write 4-bits of data to bus.
-
 BYTE WriteData(BYTE Data){
 
+    //while(!STROBE);
+    // Set data bus as output
+    //TRISC = 0x0;
+    PORTDbits.RD0 = 0;
+    PORTDbits.RD1 = 1;
+    PORTDbits.RD2 = 1;
+    PORTDbits.RD3 = 1;
+//    D3 = ((Data >> 3) & 1);
+//    D2 = ((Data >> 2) & 1);
+//    D1 = ((Data >> 1) & 1);
+//    D0 = ((Data) & 1);
+
+    //while(STROBE);
     //Wait for falling edge
-    while(STROBE) continue ;
-
-    // Meanwhile Linux brings strobe high
-    D3 = (Data >> 3) & 0x01;
-    D2 = (Data >> 2) & 0x01;
-    D1 = (Data >> 1) & 0x01;
-    D0 = (Data) & 0x01;
-
-    //Wait for falling edge
-    while(STROBE) continue ;
-
     return TRUE ; //COME UP WITH A TEST FOR SUCCESS HERE
 }
 
@@ -133,51 +141,51 @@ BYTE LowNibble(BYTE byte){
 //Purpose: Handles the Get command operationg
 
 BYTE GetCMD(){
-
-    unsigned adcRead = 0;
-
-    adcRead = ReadADC(); //Get the value from the ADC
-    ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off // Might have to be modified for lab 2
-    ReadTimeDS1307(&RTCData.seconds,
-            &RTCData.minutes,
-            &RTCData.hours,
-            &RTCData.day,
-            &RTCData.date,
-            &RTCData.month,
-            &RTCData.year,
-            &RTCData.control); //Get data from RTC (DS1307).
-
-    // 3 ADC nibles-------------------------------------------ADC MUST BE RECONFIGURED TO 12 bit precision
-    // Manipulate unsigned into 3 nibbles
-    WriteData(0xFF);
-    WriteData(0xFF);
-    WriteData(0xFF);
-
-
-    // 8 RTC values
-     WriteData(HighNibble(RTCData.seconds));
-     WriteData(LowNibble(RTCData.seconds));
-
-     WriteData(HighNibble(RTCData.minutes));
-     WriteData(LowNibble(RTCData.minutes));
-
-     WriteData(LowNibble(RTCData.hours));
-     WriteData(LowNibble(RTCData.hours));
-
-     WriteData(LowNibble(RTCData.day));
-     WriteData(LowNibble(RTCData.day));
-
-     WriteData(LowNibble(RTCData.date));
-     WriteData(LowNibble(RTCData.date));
-
-     WriteData(LowNibble(RTCData.month));
-     WriteData(LowNibble(RTCData.month));
-
-     WriteData(LowNibble(RTCData.year));
-     WriteData(LowNibble(RTCData.year));
-
-     WriteData(LowNibble(RTCData.control));
-     WriteData(LowNibble(RTCData.control));
-
+//
+//    unsigned adcRead = 0;
+//
+//    adcRead = ReadADC(); //Get the value from the ADC
+//    ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off // Might have to be modified for lab 2
+////    ReadTimeDS1307(&RTCData.seconds,
+//            &RTCData.minutes,
+//            &RTCData.hours,
+//            &RTCData.day,
+//            &RTCData.date,
+//            &RTCData.month,
+//            &RTCData.year,
+//            &RTCData.control); //Get data from RTC (DS1307).
+//
+//    // 3 ADC nibles-------------------------------------------ADC MUST BE RECONFIGURED TO 12 bit precision
+//    // Manipulate unsigned into 3 nibbles
+//    WriteData(0xFF);
+//    WriteData(0xFF);
+//    WriteData(0xFF);
+//
+//
+//    // 8 RTC values
+//     WriteData(HighNibble(RTCData.seconds));
+//     WriteData(LowNibble(RTCData.seconds));
+//
+//     WriteData(HighNibble(RTCData.minutes));
+//     WriteData(LowNibble(RTCData.minutes));
+//
+//     WriteData(LowNibble(RTCData.hours));
+//     WriteData(LowNibble(RTCData.hours));
+//
+//     WriteData(LowNibble(RTCData.day));
+//     WriteData(LowNibble(RTCData.day));
+//
+//     WriteData(LowNibble(RTCData.date));
+//     WriteData(LowNibble(RTCData.date));
+//
+//     WriteData(LowNibble(RTCData.month));
+//     WriteData(LowNibble(RTCData.month));
+//
+//     WriteData(LowNibble(RTCData.year));
+//     WriteData(LowNibble(RTCData.year));
+//
+//     WriteData(LowNibble(RTCData.control));
+//     WriteData(LowNibble(RTCData.control));
+//
 }
 
