@@ -28,7 +28,7 @@ Group Members:
 #define TRUE 1
 #define FALSE 0
 #define pport 0x378               //Base Address of Parallel Port.
-#define WAIT_TIME 1             //Wait Time for Sleep Function.
+#define WAIT_TIME 10000             //Wait Time for Sleep Function. 50000 = 0.1 seconds
 
 //Parallel Port Setup
 #define ppData pport              //Data Address is base address of Parallel Port.
@@ -118,11 +118,11 @@ int main(int argc, char *argv[]){
     switch(toupper(cmd)){
     case 'R':
       ClearTerminal();
-      //commandsuccess = Reset();
+      commandsuccess = Reset();
       break;
     case 'G':
       ClearTerminal();
-      //commandsuccess = Get();
+      commandsuccess = Get();
       break;
     case 'P':
       ClearTerminal();
@@ -172,15 +172,15 @@ void ParPortWrite(BYTE byte){
   //Output command to data bus.
   outb(byte, ppData);                                      
   printf("\nParallel Port Wrote: %x",byte & 0x0F);
-  sleep(WAIT_TIME);
+  usleep(WAIT_TIME);
 
   // Set the strobe to high.
   outb(0x00, ppControl);                                  
-  sleep(WAIT_TIME);
+  usleep(WAIT_TIME);
   
   // Set the strobe to low.
   outb(0x01, ppControl); 
-  sleep(WAIT_TIME);
+  usleep(WAIT_TIME);
 
 } 
 
@@ -195,22 +195,22 @@ BYTE ParPortRead(){
 
   //Set strobe high.
   outb(0x20, ppControl); 
-  sleep(WAIT_TIME);
+  usleep(WAIT_TIME);
 
   //Read the data on the bus.
   byte = inb(ppData);    
   printf("\nParallel Port Read: %x",byte & 0x0F);
-  sleep(WAIT_TIME);
+  usleep(WAIT_TIME);
   
   //Set strobe low.
   outb(0x21, ppControl);  
-  sleep(WAIT_TIME);
+  usleep(WAIT_TIME);
 
   //Extract lower bits of read variable.
   byte &= 0x0F;
 
   //Put stobe and data back to low and low impedance mode
-  //outb(0x01, ppControl);  
+  outb(0x01, ppControl);  
 
   //Return byte read.
   return byte;
@@ -268,7 +268,7 @@ int Get(){
   //Place Get Code Here
 
   //Read the ACK from the GET on the data line.
-  //ackResult = ParPortRead();
+  ackResult = ParPortRead();
 
   if( ackResult != MSG_ACK_GET) {
     printf("\nStatus: Get command failed");
@@ -316,6 +316,7 @@ void ClearTerminal()
   //Not using system("clear") because it does not behave corretly.
   printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
   printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+  sleep(1);
 }
 
 
