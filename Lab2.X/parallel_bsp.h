@@ -65,7 +65,6 @@ typedef unsigned char BYTE ;
     
     //Functions
     void ReadCommand();
-    BYTE SendAck( BYTE tyepOfAck ); //Send Acknowledgment Message
     BYTE WriteData(BYTE Data); //Write 4 bit data on the bus
     BYTE PingCMD(); //Handle PING
     BYTE GetCMD();//Handle GET

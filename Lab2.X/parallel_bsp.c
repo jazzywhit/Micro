@@ -23,18 +23,16 @@
 
 // Read Data Bus
 // Reads data from the parallel port data pins and reconstructs the value as a BYTE
-
-BYTE readResult ;
 unsigned char test = 1;
 
 BYTE ReadDataBus(){
 
-    readResult = 0;
+    BYTE readResult = 0;
     //Grab data
-    readResult = (PortD3 << 3);
-    readResult = (PortD2 << 2);
-    readResult = (PortD1 << 1);
-    readResult = (PortD0);
+    readResult |= (PortD3 << 3);
+    readResult |= (PortD2 << 2);
+    readResult |= (PortD1 << 1);
+    readResult |= (PortD0);
 
     readResult &= 0x0F;
 
@@ -45,71 +43,53 @@ BYTE ReadDataBus(){
 //Purpose: Read 4 bits from the bus to conclude which command is being used.
 //When Strobe is low
 void ReadCommand(){
-
+//-----------------------------------------------------------STROBE LOW 
     if(STROBE){
+//-----------------------------------------------------------STROBE HIGH
         BYTE command = 0;
 
         while(STROBE) continue;
-
+ //-----------------------------------------------------------STROBE LOW
         //Read the command from the bus.
+        TRISD |= 0xF;     // Set the port as input
         command = ReadDataBus();
-
         while(!STROBE) continue;
-
+//-----------------------------------------------------------STROBE HIGH
          switch ( command ) {
             case MSG_PING:
-                SendAck(MSG_ACK_PING);
+                WriteData(MSG_ACK_PING);
                 while(STROBE) continue;
                 break;
             case MSG_RESET:
-                SendAck(MSG_ACK_RESET);
+                WriteData(MSG_ACK_RESET);
                 //Reset Data or something.
                 while(STROBE) continue;
                 break;
-            case MSG_GET:
-                SendAck(MSG_ACK_GET);
+            case MSG_GET:          
+                WriteData(MSG_ACK_GET);
                 //GetCMD();
                 while(STROBE) continue;
                 break;
             case MSG_NOTHING:
-                TRUE ;
+                TRUE ;// Might need to add a while loop here too to prevent bugs
                 break;
-            default:
+            default: // Might need to add a while loop here too to prevent bugs
                 return FALSE ;
         }
     }
-
-}
-
-//SendACK
-//Purpose: Send general acknowledgment
-BYTE SendAck( BYTE msgType){
-    //Select statemtn for the type of ACK.
-//    D3 = ((typeOfAck >> 3) & 1);
-//    D2 = ((typeOfAck >> 2) & 1);
-//    D1 = ((typeOfAck >> 1) & 1);
-//    D0 = ((typeOfAck) & 1);
-    WriteData(msgType);
+//-----------------------------------------------------------STROBE LOW
 }
 
 //WriteData
 //Purpose: Write 4-bits of data to bus.
 BYTE WriteData(BYTE data){
+    TRISD &= 0xF0; //Set as an output.
 
-    //while(!STROBE);
-    // Set data bus as output
-    //TRISC = 0x0;
-//    PORTDbits.RD0 = 0;;
-//    PORTDbits.RD1 = 1;
-//    PORTDbits.RD2 = 1;
-//    PORTDbits.RD3 = 1;
     PortD3 = ((data >> 3) & 1);
     PortD2 = ((data >> 2) & 1);
     PortD1 = ((data >> 1) & 1);
     PortD0 = ((data) & 1);
 
-    //while(STROBE);
-    //Wait for falling edge
     return TRUE ; //COME UP WITH A TEST FOR SUCCESS HERE
 }
 

@@ -67,6 +67,7 @@ void main()
         //ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
         //ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year , &control); //Get data from RTC (DS1307).
         ReadCommand();
+        //WriteData(0x06);
 
 //        PORTDbits.RD0 = 0;
 //        PORTDbits.RD1 = 1;
