@@ -44,11 +44,11 @@ void P18f45k20Init();
 void InitPorts();
 void InitADC();
 void InitI2C();
-void ProcessDigitalResult(unsigned char *compare);
+void ProcessDigitalResult(unsigned short *compare);
 void ParallelStatus();
 void ParallelRead();
 void ParallelWrite();
-unsigned char ReadADC();
+unsigned short ReadADC();
 
 
 #ifdef	__cplusplus

@@ -62,9 +62,24 @@ BYTE ReadByte();
 int Reset();
 int Get();
 int Ping();
-void DisplayData(BYTE RTCData[], int adcResult ); 
+void DisplayData(); 
 void ClearTerminal();
 
+//--------------------------- Global Variables -------------------------------
+//Structure to define the DateTime in an easily accessible way.
+//struct RTCData{
+//    unsigned char seconds = 0;
+//    unsigned char minutes = 0;
+//    unsigned char hours = 0;
+//    unsigned char day = 0;
+//    unsigned char date = 0;
+//    unsigned char month = 0;
+//    unsigned char year = 0;
+//    unsigned char control = 0;
+//};
+
+BYTE RTCData[8]; // Decide whether we want to use a struct or Array for this
+unsigned short adcResult = 0;
 
 //---------------------------- main ------------------------------------------------
 //Purpose: Initial insertion into the program.
@@ -95,7 +110,8 @@ int main(int argc, char *argv[]){
   }
 
   //Set initial state of STROBE and Data Bus
-  outb(0x01,ppControl); //Strobe low. 
+  outb(0x01,ppControl); //-----------------------------------------------------------STROBE LOW
+
   outb(0x00,ppData);	//Initial value on data bus of 0
   
   while(TRUE){
@@ -163,58 +179,114 @@ int OpenPort(int portAdr){
   return TRUE;
 }
 
-
-//------------------------------- ParPortWrite -----------------------------------------
-//Purpose: Execute a 4-bit write on the Parallel Port.
-
-void ParPortWrite(BYTE byte){
-
-  //Output command to data bus.
-  outb(byte, ppData);                                      
-  printf("\nParallel Port Wrote: %x",byte & 0x0F);
-  usleep(WAIT_TIME);
-
-  // Set the strobe to high.
-  outb(0x00, ppControl);                                  
-  usleep(WAIT_TIME);
-  
-  // Set the strobe to low.
-  outb(0x01, ppControl); 
-  usleep(WAIT_TIME);
-
-} 
-
-
-//------------------------------- ParPortRead -------------------------------------------
+//-------------------------------NEW ParPortRead -------------------------------------------
 //Purpose: Execute a 4-bit read of the Parallel Port.
 
 BYTE ParPortRead(){
-
-  //Local varaibles.
-  BYTE byte;
-
-  //Set strobe high.
-  outb(0x20, ppControl); 
-  usleep(WAIT_TIME);
-
-  //Read the data on the bus.
-  byte = inb(ppData);    
-  printf("\nParallel Port Read: %x",byte & 0x0F);
-  usleep(WAIT_TIME);
-  
-  //Set strobe low.
-  outb(0x21, ppControl);  
-  usleep(WAIT_TIME);
-
-  //Extract lower bits of read variable.
-  byte &= 0x0F;
-
-  //Put stobe and data back to low and low impedance mode
-  outb(0x01, ppControl);  
-
-  //Return byte read.
-  return byte;
+    
+    BYTE byte;
+    
+    outb(0x20, ppControl); //-------------------------------------------STROBE HIGH / INPUT
+    
+    usleep(WAIT_TIME);
+    
+    //------------------------Pic WRITES data on the bus
+    
+    //Read the data on the bus.
+    byte = inb(ppData);   printf("\nParallel Port Read: %x",byte & 0x0F);
+    
+    usleep(WAIT_TIME);
+    
+    outb(0x21, ppControl);//-------------------------------------------STROBE LOW / INPUT
+    
+    usleep(WAIT_TIME);
+    
+    //Extract lower bits of read variable.
+    byte &= 0x0F;
+    
+    return byte;
 }
+////-------------------------------OLD ParPortRead -------------------------------------------
+////Purpose: Execute a 4-bit read of the Parallel Port.
+//
+//BYTE ParPortRead(){
+//    
+//    BYTE byte;
+//    
+//    
+//    outb(0x20, ppControl); //-------------------------------------------STROBE HIGH / INPUT
+//    usleep(WAIT_TIME);
+//    
+//    //------------------------Pic WRITES data on the bus
+//    
+//    //Read the data on the bus.
+//    byte = inb(ppData);   printf("\nParallel Port Read: %x",byte & 0x0F);
+//    usleep(WAIT_TIME);
+//    
+//    outb(0x21, ppControl);//-------------------------------------------STROBE LOW / INPUT
+//    
+//    usleep(WAIT_TIME);
+//    
+//    //Extract lower bits of read variable.
+//    byte &= 0x0F;
+//    
+//    //Keep stobe low and data low impedance mode (OUTPUT)
+//    outb(0x01, ppControl); 
+//    
+//    //Return byte read.
+//    return byte;
+//}
+
+//------------------------------- NEW ParPortWrite -----------------------------------------
+//Purpose: Execute a 4-bit write on the Parallel Port.
+
+void ParPortWrite(BYTE byte){
+    
+    usleep(WAIT_TIME);
+    
+    outb(0x00, ppControl);//------------------------------------------STROBE HIGH / OUTPUT
+    
+    usleep(WAIT_TIME);
+
+    //Output command to data bus.
+    outb(byte, ppData);
+    printf("\nParallel Port Wrote: %x",byte & 0x0F);
+    
+    usleep(WAIT_TIME);
+    
+    outb(0x01, ppControl); //------------------------------------------STROBE LOW / OUTPUT
+    
+    usleep(WAIT_TIME);
+    
+    //------------------------Pic READS data on the bus
+    
+}
+
+////-------------------------------OLD ParPortWrite -----------------------------------------
+////Purpose: Execute a 4-bit write on the Parallel Port.
+//
+//void ParPortWrite(BYTE byte){
+//
+//  //Output command to data bus.
+//  outb(byte, ppData);                                      
+//  printf("\nParallel Port Wrote: %x",byte & 0x0F); // <---MESSAGE--- I know this works but it seems like it should be done below where I have indicated
+//    
+//  usleep(WAIT_TIME);
+//
+//  
+//  outb(0x00, ppControl);//------------------------------------------STROBE HIGH / OUTPUT
+//  
+//  // <-----------MESSAGE-----------------outb(byte, ppData);
+//  usleep(WAIT_TIME);
+//  
+//
+//  outb(0x01, ppControl); //------------------------------------------STROBE LOW / OUTPUT
+//  usleep(WAIT_TIME);
+//    
+//  //------------------------Pic READS data on the bus
+//
+//} 
+//
 
 
 //--------------------------------- Read Byte --------------------------------------------
@@ -226,10 +298,9 @@ BYTE ReadByte(){
   BYTE byte;
   
   //Reconstruct the two 4bit messages into a byte
-  temp = ParPortRead();
-  byte = temp<<4 & 0xF0; 
-  temp = ParPortRead();
-  byte |= temp;
+  byte = (ParPortRead()<<4) & 0xF0;
+
+  byte |= ParPortRead();
   
   return byte;  
 }
@@ -260,22 +331,33 @@ int Reset(){
 
 int Get(){
 
-  BYTE ackResult;
-
-  //Write GET Command to PIC.
-  ParPortWrite(MSG_GET);
-  
-  //Place Get Code Here
-
-  //Read the ACK from the GET on the data line.
-  ackResult = ParPortRead();
-
-  if( ackResult != MSG_ACK_GET) {
-    printf("\nStatus: Get command failed");
-    return FALSE ;
-  }
-
-  return TRUE;
+    BYTE ackResult;
+    
+    //Write GET Command to PIC.
+    ParPortWrite(MSG_GET);
+    
+    //Read 3 ADC Nibles and assemble them
+    adcResult = ( ParPortRead() << 8 ) & 0x0300; // bit 8 and 9.
+    adcResult |= ReadByte(); // ReadByte reads low Byte and
+    
+    // Read RTC data for all 8 Bytes of information.
+    int i ;
+    for(i = 0 ; i < 8 ; i++) {
+        RTCData[i] = ReadByte() ;
+    }
+    
+    //Read the ACK from the GET on the data line.
+    ackResult = ParPortRead();
+    
+    if( ackResult != MSG_ACK_GET) {
+        printf("\nStatus: Get command failed");
+        return FALSE ;
+    }
+    
+    // Display Data
+    DisplayData();
+    
+    return TRUE;
 }
 
 
@@ -303,7 +385,7 @@ int Ping(){
 //------------------------------- DisplayData --------------------------------------------
 //Purpose: Diaplay the ADC and RTC data retreived from the PIC. 
 
-void DisplayData(BYTE RTCData[], int adcResult ){
+void DisplayData(){
 
 
 }
@@ -320,38 +402,4 @@ void ClearTerminal()
 }
 
 
-
-/*//Some Get Sudo Code
-  BYTE RTCData[8];
-  BYTE adcHighNibble; 
-  BYTE adcLowByte;
-  int adcResult;
-  BYTE ackResult;
-  
-  // Send Command
-  ParPortWrite(MSG_GET);
-  
-
-  // Read 3 Nible from ADC 
-  adcHighNibble = ParPortRead();
-  adcLowByte = ReadByte();
-  adcResult = ((adcHighNibble&0x0F) * 16 * 16) + adcLowByte ;
-  
-  // Read RTC data for all 8 Bytes of information.
-  int i ;
-  for(i = 0 ; i < 8 ; i++) {
-    RTCData[i] = ReadByte() ;
-  }
-
-  ackResult = ParPortRead();
-
-  // Get Acknowledgement 
-  if( ackResult != MSG_ACK ) {
-    printf("\nStatus: Get command failed");   
-    return FALSE ;
-  }
-
-  // Display Data 
-  DisplayData( RTCData , adcResult );
-  */
 

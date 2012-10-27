@@ -60,13 +60,25 @@ void InitI2C()
         Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
-unsigned char ReadADC()
+unsigned short ReadADC()
 {
+    unsigned char lowByte = 0;
+    unsigned char high2Bits = 0;
+    unsigned short result = 0;
+
     ADCON0bits.GO_DONE = 1; //Start Conversion.
     while(ADCON0bits.GO_DONE) {
         continue ; //While conversion is not completed. Loop.
     }
-    return ADRESH;
+
+    // ADRESH holds the MSbit's of the ADC conversion
+    result = ADRESH & 0x03  ; // Mask out everything but the bit 1 and 0.
+    result = result << 3 ;    // Shift MSBits to bit position 8 and 9
+
+    // ADRESL holds the LSB of the ADC conversion
+    result &= ADRESL;
+
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,7 +90,7 @@ unsigned char ReadADC()
  *      Info        : The ADC_COMPARE_VALUE value will change based on the room conditions.
 */
 ////////////////////////////////////////////////////////////////////////////////
-void ProcessDigitalResult(unsigned char *compare)
+void ProcessDigitalResult(unsigned short *compare)
 {
     if(*compare < ADC_COMPARE_VALUE) //If it is dark the voltage will be around (.3-.4)V
         PORTDbits.RD7 = 1; // LED Will turn Off/On depending on comparision.
@@ -104,7 +116,7 @@ void InitADC()
             ADCON1bits.VCFG1 = 0;  //Negative Voltage Reference select bit supplied by VSS. (Data Sheet PAGE 272)
 
     //3. Set the result justification, ADC clock source, and acquisition time in ADCON2.
-            ADCON2 = 0b00111000; // Left Justified (7), Not Used (6), Aquisition Time 20 TAD (3-5),Conversion Clock Time FOSC/2 (0-2) (Data Sheet PAGE 273)
+            ADCON2 = 0b10111000; // Right Justified (7), Not Used (6), Aquisition Time 20 TAD (3-5),Conversion Clock Time FOSC/2 (0-2) (Data Sheet PAGE 273)
 
     //4. Select the channel and turn on the ADC in ADCON0.
             ADCON0 = 0b00000001; // Not Used(7-6), Analog Channel select AN0 (5-2), A/D Conversion Status Bit (1), ADC Enable (0) (Data Sheet PAGE 271)

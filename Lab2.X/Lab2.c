@@ -44,7 +44,7 @@
  */
 ////////////////////////////////////////////////////////////////////////////////
 
-unsigned char adcRead = 0;
+unsigned short adcRead = 0; // 2 bytes
 unsigned char seconds = 0;
 unsigned char minutes = 25;
 unsigned char hours = 05;
@@ -52,6 +52,8 @@ unsigned char day = 1;
 unsigned char date = 30;
 unsigned char month = 9;
 unsigned char year = 12;
+unsigned char control;
+
 void main()
 {
     //unsigned char CMDRead;
@@ -63,9 +65,9 @@ void main()
     while(1)
     {
 
-        //adcRead = ReadADC(); //Get the value from the ADC
-        //ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
-        //ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year , &control); //Get data from RTC (DS1307).
+        adcRead = ReadADC(); //Get the value from the ADC
+        ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off
+        ReadTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year , &control); //Get data from RTC (DS1307).
         ReadCommand();
         //WriteData(0x06);
 

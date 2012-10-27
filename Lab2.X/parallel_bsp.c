@@ -42,47 +42,47 @@ BYTE ReadDataBus(){
 //Read Command
 //Purpose: Read 4 bits from the bus to conclude which command is being used.
 //When Strobe is low
-void ReadCommand(){
-//-----------------------------------------------------------STROBE LOW 
-    if(STROBE){
-//-----------------------------------------------------------STROBE HIGH
+
+void ReadCommand() {
+
+    if (STROBE) {
+        //-----------------------------------------------------------STROBE HIGH
         BYTE command = 0;
 
-        while(STROBE) continue;
- //-----------------------------------------------------------STROBE LOW
+        while (STROBE) continue;
+        //-----------------------------------------------------------STROBE LOW
         //Read the command from the bus.
-        TRISD |= 0xF;     // Set the port as input
+        TRISD |= 0xF; // Set the port as input
         command = ReadDataBus();
-        while(!STROBE) continue;
-//-----------------------------------------------------------STROBE HIGH
-         switch ( command ) {
+        while (!STROBE) continue;
+        //-----------------------------------------------------------STROBE HIGH
+        switch (command) {
             case MSG_PING:
                 WriteData(MSG_ACK_PING);
-                while(STROBE) continue;
+                while (STROBE) continue; //<<---MESSAGE----We should try moving this into WriteData function
                 break;
             case MSG_RESET:
                 WriteData(MSG_ACK_RESET);
                 //Reset Data or something.
-                while(STROBE) continue;
+                while (STROBE) continue;
                 break;
-            case MSG_GET:          
-                WriteData(MSG_ACK_GET);
-                //GetCMD();
-                while(STROBE) continue;
+            case MSG_GET:
+                GetCMD();
                 break;
             case MSG_NOTHING:
-                TRUE ;// Might need to add a while loop here too to prevent bugs
+                TRUE; // Might need to add a while loop here too to prevent bugs
                 break;
             default: // Might need to add a while loop here too to prevent bugs
-                return FALSE ;
+                return FALSE;
         }
     }
-//-----------------------------------------------------------STROBE LOW
+    //-----------------------------------------------------------STROBE LOW
 }
 
 //WriteData
 //Purpose: Write 4-bits of data to bus.
-BYTE WriteData(BYTE data){
+
+BYTE WriteData(BYTE data) {
     TRISD &= 0xF0; //Set as an output.
 
     PortD3 = ((data >> 3) & 1);
@@ -90,70 +90,153 @@ BYTE WriteData(BYTE data){
     PortD1 = ((data >> 1) & 1);
     PortD0 = ((data) & 1);
 
-    return TRUE ; //COME UP WITH A TEST FOR SUCCESS HERE
+    return TRUE; //COME UP WITH A TEST FOR SUCCESS HERE
 }
 
+BYTE HighNibble(BYTE byte) {
 
-BYTE HighNibble(BYTE byte){
-
-    return (byte>>4) & 0x0F ;
+    return (byte >> 4) & 0x0F;
 }
 
+BYTE LowNibble(BYTE byte) {
 
-BYTE LowNibble(BYTE byte){
-
-    return  byte & 0x0F ;
+    return byte & 0x0F;
 }
 
 //GetCMD
 //Purpose: Handles the Get command operationg
 
-BYTE GetCMD(){
-//
-//    unsigned adcRead = 0;
-//
-//    adcRead = ReadADC(); //Get the value from the ADC
-//    ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off // Might have to be modified for lab 2
-////    ReadTimeDS1307(&RTCData.seconds,
-//            &RTCData.minutes,
-//            &RTCData.hours,
-//            &RTCData.day,
-//            &RTCData.date,
-//            &RTCData.month,
-//            &RTCData.year,
-//            &RTCData.control); //Get data from RTC (DS1307).
-//
-//    // 3 ADC nibles-------------------------------------------ADC MUST BE RECONFIGURED TO 12 bit precision
-//    // Manipulate unsigned into 3 nibbles
-//    WriteData(0xFF);
-//    WriteData(0xFF);
-//    WriteData(0xFF);
-//
-//
-//    // 8 RTC values
-//     WriteData(HighNibble(RTCData.seconds));
-//     WriteData(LowNibble(RTCData.seconds));
-//
-//     WriteData(HighNibble(RTCData.minutes));
-//     WriteData(LowNibble(RTCData.minutes));
-//
-//     WriteData(LowNibble(RTCData.hours));
-//     WriteData(LowNibble(RTCData.hours));
-//
-//     WriteData(LowNibble(RTCData.day));
-//     WriteData(LowNibble(RTCData.day));
-//
-//     WriteData(LowNibble(RTCData.date));
-//     WriteData(LowNibble(RTCData.date));
-//
-//     WriteData(LowNibble(RTCData.month));
-//     WriteData(LowNibble(RTCData.month));
-//
-//     WriteData(LowNibble(RTCData.year));
-//     WriteData(LowNibble(RTCData.year));
-//
-//     WriteData(LowNibble(RTCData.control));
-//     WriteData(LowNibble(RTCData.control));
-//
+BYTE GetCMD() {
+
+    //-----------------------------------------------------------STROBE HIGH  
+    /////////////////////////////3 ADC WRITES//////////////////////////////
+    // High Niblle
+    WriteData( (adcRead & 0x0300) >> 8 );
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+
+
+    //-----------------------------------------------------------STROBE HIGH  
+   // Mid Nibble
+    WriteData( (adcRead & 0x00F0) >> 4 );
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while (!STROBE) continue;
+
+
+    //-----------------------------------------------------------STROBE HIGH  
+    // Low nible
+    WriteData( adcRead & 0x000F );
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while (!STROBE) continue;
+
+
+    /////////////////////////////16 RTC WRITES//////////////////////////////
+    // Seconds
+    //-----------------------------------------------------------STROBE HIGH  
+    WriteData(HighNibble (seconds));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+     //-----------------------------------------------------------STROBE HIGH  
+    WriteData(LowNibble (seconds));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+
+    //-----------------------------------------------------------STROBE HIGH  
+    // Minutes
+    WriteData(HighNibble(minutes));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+    //-----------------------------------------------------------STROBE HIGH  
+    WriteData(LowNibble(minutes));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while (!STROBE) continue;
+
+    //-----------------------------------------------------------STROBE HIGH 
+    // Hour
+    WriteData(HighNibble(hours));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while (!STROBE) continue;
+    //-----------------------------------------------------------STROBE HIGH  
+    WriteData(LowNibble(hours));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+
+    //-----------------------------------------------------------STROBE HIGH 
+    // Day
+    WriteData(HighNibble(day));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+    //-----------------------------------------------------------STROBE HIGH  
+    WriteData(LowNibble(day));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+
+    //-----------------------------------------------------------STROBE HIGH  
+    // Date
+    WriteData(HighNibble(date));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+    //-----------------------------------------------------------STROBE HIGH  
+    WriteData(LowNibble(date));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+
+    //-----------------------------------------------------------STROBE HIGH
+    // Month
+    WriteData(HighNibble(month));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+    //-----------------------------------------------------------STROBE HIGH
+    WriteData(LowNibble(month));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+   
+    //-----------------------------------------------------------STROBE HIGH
+    // Year
+    WriteData(HighNibble(year));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+    //-----------------------------------------------------------STROBE HIGH
+    WriteData(LowNibble(year));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+
+    //-----------------------------------------------------------STROBE HIGH
+    // Date
+    WriteData(HighNibble(control));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while (!STROBE) continue;
+    //-----------------------------------------------------------STROBE HIGH
+    WriteData(LowNibble(control));
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+    while(!STROBE) continue;
+
+    //////////////////////////////////ACK////////////////////////////////////
+
+    //-----------------------------------------------------------STROBE HIGH
+    // Ack
+    WriteData(MSG_ACK_GET);
+    while(STROBE) continue;
+    //-----------------------------------------------------------STROBE LOW
+
 }
 
