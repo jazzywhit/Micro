@@ -74,7 +74,7 @@ unsigned char ReadADC()
     result = result << 3 ;    // Shift MSBits to bit position 8 and 9
 
     // ADRESL holds the LSB of the ADC conversion
-    result &= ADRESL;
+    result |= ADRESL;
 
     return result;
 }
