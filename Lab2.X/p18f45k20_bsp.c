@@ -60,11 +60,9 @@ void InitI2C()
         Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
-unsigned short ReadADC()
+unsigned char ReadADC()
 {
-    unsigned char lowByte = 0;
-    unsigned char high2Bits = 0;
-    unsigned short result = 0;
+    unsigned char result = 0;
 
     ADCON0bits.GO_DONE = 1; //Start Conversion.
     while(ADCON0bits.GO_DONE) {
@@ -90,9 +88,9 @@ unsigned short ReadADC()
  *      Info        : The ADC_COMPARE_VALUE value will change based on the room conditions.
 */
 ////////////////////////////////////////////////////////////////////////////////
-void ProcessDigitalResult(unsigned short *compare)
+void ProcessADC(unsigned char compare)
 {
-    if(*compare < ADC_COMPARE_VALUE) //If it is dark the voltage will be around (.3-.4)V
+    if(compare < ADC_COMPARE_VALUE) //If it is dark the voltage will be around (.3-.4)V
         PORTDbits.RD7 = 1; // LED Will turn Off/On depending on comparision.
     else
 	PORTDbits.RD7 = 0;

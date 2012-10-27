@@ -34,7 +34,7 @@ extern "C" {
 #define PortD2 PORTDbits.RD2
 #define PortD3 PORTDbits.RD3
 #define STROBE PORTDbits.RD5
-    //#define ACKPIN PORTCbits.RD7
+//#define ACKPIN PORTCbits.RD7
 
 #define TRUE 1
 #define FALSE 0
@@ -48,30 +48,30 @@ extern "C" {
 #define MSG_ACK_GET 0x0C
 #define MSG_NOTHING 0x0F
 
-    //Parallel Reply Messages
+//Parallel Reply Messages
 #define MSG_ACK 0x0E
 
-    //Structure to define the DateTime in an easily accessible way.
+//Structure to define the DateTime in an easily accessible way.
 
-    typedef struct {
-        BYTE seconds;
-        BYTE minutes;
-        BYTE hours;
-        BYTE day;
-        BYTE date;
-        BYTE month;
-        BYTE year;
-        BYTE control;
-    } RTCData;
-
-    //Functions
-    void ReadCommand();
-    BYTE WriteData(BYTE Data); //Write 4 bit data on the bus
-    BYTE PingCMD(); //Handle PING
-    BYTE GetCMD(); //Handle GET
-    BYTE ResetCMD(); //Handle RESET
-
-
+typedef struct {
+    BYTE seconds;
+    BYTE minutes;
+    BYTE hours;
+    BYTE day;
+    BYTE date;
+    BYTE month;
+    BYTE year;
+    BYTE control;
+} RTCData;
+ 
+//Functions
+void CheckParallel();
+BYTE ReadData();
+void WriteData(BYTE Data); //Write 4 bit data on the bus
+void GetCommand();
+void SendADC();
+void SendTime(); //Send the Time to Linux
+void ResetConnection();
 
 #ifdef	__cplusplus
 }
