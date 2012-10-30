@@ -40,10 +40,10 @@ extern "C" {
 ////////////////////////////////////////////////////////////////////////////////
 //FUNCTION DECLARATIONS
 ////////////////////////////////////////////////////////////////////////////////
-void P18f45k20Init();
-void InitPorts();
-void InitADC();
-void InitI2C();
+void P18f45k20Init(void);
+void InitPorts(void);
+void InitADC(void);
+void InitI2C(void);
 void ProcessADC(unsigned char compare);
 unsigned char ReadADC();
 

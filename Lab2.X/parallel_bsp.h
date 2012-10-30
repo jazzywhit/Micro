@@ -65,12 +65,12 @@ typedef struct {
 } RTCData;
  
 //Functions
-void CheckParallel();
+void CheckParallel(void);
 BYTE ReadData();
 void WriteData(BYTE Data); //Write 4 bit data on the bus
-void GetCommand();
-void SendADC();
-void SendTime(); //Send the Time to Linux
+void GetCommand(void);
+void SendADC(void);
+void SendTime(void); //Send the Time to Linux
 void ResetConnection();
 
 #ifdef	__cplusplus

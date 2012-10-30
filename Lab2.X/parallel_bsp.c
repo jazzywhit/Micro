@@ -25,14 +25,16 @@
 //--------------------------- CheckParallel () ----------------------------------------
 //Purpose: Read 4 bits from the bus to conclude which command is being used.
 //When Strobe is low
-void CheckParallel() {
-    if (STROBE) { //STROBE HIGH
+void CheckParallel(void) {
         BYTE command = 0;
-        
-        while (STROBE) continue; //Wait for STROBE LOW
-        ReadData(&command); //Read the command from the bus.
+
         while (!STROBE) continue; //Wait for STROBE HIGH
-        
+        ReadData(&command); //Read the command from the BUS
+        while (STROBE) continue; //Wait for STROBE LOW
+
+        while (!STROBE) continue; //Wait for STROBE HIGH
+        while (STROBE) continue; //Wait for STROBE LOW
+
         switch (command) {
             case MSG_PING:
                 WriteData(MSG_ACK_PING); //Send ack. (Only task)
@@ -46,10 +48,10 @@ void CheckParallel() {
                 GetCommand(); //Run the GET command
                 break;
             default:
-                while (STROBE) continue; //Remain here while the strobe remains high
+                while (!STROBE) continue; //Remain here while the strobe remains high
                 break;
         }
-    }
+        while (!STROBE) continue; //Remain here while the strobe remains high
 }
 
 /*--------------------------- ResetConnection () ------------------------------------------------------
@@ -57,7 +59,7 @@ void CheckParallel() {
  Parameters  : N/A
  Output      : N/A
 */
-void ResetConnection(){
+void ResetConnection(void){
 
 }
 
@@ -67,7 +69,7 @@ void ResetConnection(){
  Parameters  : N/A
  Output      : N/A
 */
-BYTE ReadData(unsigned char *readResult){
+BYTE ReadData(unsigned char * readResult){
     TRISD |= 0x0F; // Set the port as input
 
     //Grab data
@@ -92,7 +94,13 @@ void WriteData(BYTE data) {
     PortD1 = ((data >> 1) & 1);
     PortD0 = ((data) & 1);
 
-    while (STROBE) continue; //COME UP WITH A TEST FOR SUCCESS HERE
+    while(!STROBE) continue; //Linux Reading
+    while(STROBE) continue; //Linux Done Reading
+
+    PortD3 = 0;
+    PortD2 = 0;
+    PortD1 = 0;
+    PortD0 = 0;
 }
 
 /*--------------------------- HighNibble () ------------------------------------------------------
@@ -123,7 +131,7 @@ BYTE LowNibble(BYTE byte) {
  Parameters  : N/A
  Output      : N/A
 */
-void GetCommand(){
+void GetCommand(void){
     SendADC(); //Start with the ADC first.
     //SendTime(); //Finish with the time.
 }
@@ -134,7 +142,7 @@ void GetCommand(){
  Output      : N/A
 */
 void SendADC(){
-    
+    /*
     unsigned char adcRead = ReadADC();
      //-----------------------------------------------------------STROBE HIGH
     /////////////////////////////3 ADC WRITES//////////////////////////////
@@ -157,6 +165,7 @@ void SendADC(){
     while(STROBE) continue;
     //-----------------------------------------------------------STROBE LOW
     while (!STROBE) continue;
+     */
 }
 
 /*--------------------------- SendTime () ------------------------------------------------------
@@ -165,7 +174,7 @@ void SendADC(){
  Output      : N/A
 */
 void SendTime() {
-
+/*
     unsigned char seconds = 0;
     unsigned char minutes = 0;
     unsigned char hours = 0;
@@ -273,5 +282,6 @@ void SendTime() {
     while(STROBE) continue;
     //-----------------------------------------------------------STROBE LOW
     while(!STROBE) continue;
-}
+*/
+ }
 

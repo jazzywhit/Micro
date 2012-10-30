@@ -19,6 +19,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 //INCLUDES
+
 #include "p18f45k20_bsp.h" //Our own board support package
 #include "ds1307_bsp.h"
 #include "parallel_bsp.h"
@@ -39,7 +40,7 @@ void main()
 {
     P18f45k20Init(); //Initialize the board and all necesary ports.
     InitHD44780();  //Initialize the LCD Board
-    ////SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); ****ONLY NEED TO DO THIS ONCE****
+    //SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); ****ONLY NEED TO DO THIS ONCE****
 
     while(1)
     {
