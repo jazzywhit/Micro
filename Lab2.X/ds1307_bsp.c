@@ -18,9 +18,10 @@
  */
 ////////////////////////////////////////////////////////////////////////////////
 #include "ds1307_bsp.h"
+
+
+
 #define	DS1307_I2C_ADDRESS 0xd0
-
-
 ////////////////////////////////////////////////////////////////////////////////
 //void WriteByte()
 /*
@@ -55,7 +56,7 @@ unsigned char WriteByte(unsigned char byte){
  Output      : 1 if sucessful, 0 if not.
  */
 ////////////////////////////////////////////////////////////////////////////////
-unsigned char SetupTimeDS1307(RTCTime * readRTCTime) {
+void SetupTimeDS1307(timeStr *dateTime) {
     
     //Send the start condition
     IdleI2C();
@@ -67,68 +68,54 @@ unsigned char SetupTimeDS1307(RTCTime * readRTCTime) {
     if(!WriteByte(DS1307_I2C_ADDRESS & 0xFE))   return (0);
     if(!WriteByte(0x00))                        return (0);
     
-    
     //Check if the seconds are within range. If they are not, send the FAIL signal.
     //Not entirely sure this is necessary. Could just return (0).
-    if (readRTCTime->seconds > 59) //Ensure value is in range
+    if (dateTime->seconds > 59) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
     
     //Write the seconds
-    if(!WriteByte(GetBCD(readRTCTime->seconds , SECONDS )))                        return (0);
-    
-    
+    if(!WriteByte(GetBCD( dateTime->seconds , SECONDS )))                        return (0);
     
     //Check if the minutes are within range. If they are not, send the FAIL signal.
     //Same as seconds.. check if this is necessary.
-    if (readRTCTime->minutes > 59) //Ensure value is in range
+    if (dateTime->minutes > 59) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
     //Write the minutes
-    if(!WriteByte(GetBCD(readRTCTime->minutes, MINUTES)))                        return (0);
-    
-    
+    if(!WriteByte(GetBCD( dateTime->minutes, MINUTES)))                        return (0);
     
     //Check if the hours are within range. If they are not, send the FAIL signal.
     //Same as seconds.. check if this is necessary.
-    if (readRTCTime->hours > 23) //Ensure value is in range
+    if (dateTime->hours > 23) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
     
     //Write the Hours
-    if(!WriteByte(GetBCD(readRTCTime->hours , HOURS )))                        return (0);
-    
-    
+    if(!WriteByte(GetBCD( dateTime->hours , HOURS )))                        return (0);
     
     //Write day
-    if (readRTCTime->day > 7) //Ensure value is in range
+    if (dateTime->day > 7) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
-    if (readRTCTime->day == 0)
+    if (dateTime->day == 0)
         SetupTimeDS1307Fail();                  return(0);
     
-    if(!WriteByte( GetBCD(readRTCTime->day , DAY )))                        return (0);
-    
-    
+    if(!WriteByte( GetBCD( dateTime->day , DAY )))                        return (0);
     
     //Write date
-    if (readRTCTime->date > 31) //Ensure value is in range
+    if (dateTime->date > 31) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
     
-    if(!WriteByte( GetBCD(readRTCTime->date, DATE )))                        return (0);
-    
-    
+    if(!WriteByte( GetBCD( dateTime->date, DATE )))                        return (0);
     
     //Write month
-    if (readRTCTime->month > 12) //Ensure value is in range
+    if (dateTime->month > 12) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
     
-    if(!WriteByte( GetBCD(readRTCTime->month, MONTH )))                        return (0);
-    
-    
+    if(!WriteByte( GetBCD( dateTime->month, MONTH )))                        return (0);
     
     //Write year
-    if (readRTCTime->year > 99) //Ensure value is in range
+    if (dateTime->year > 99) //Ensure value is in range
         SetupTimeDS1307Fail();                  return(0);
     
-    if(!WriteByte( GetBCD(readRTCTime->year , YEAR )))                        return (0);
-    
+    if(!WriteByte( GetBCD( dateTime->year , YEAR )))                        return (0);
     
     //Write control
     //I don't recall this from the datagram. Check this against the datasheet.
@@ -142,8 +129,7 @@ unsigned char SetupTimeDS1307(RTCTime * readRTCTime) {
     return (1);
 }
 //----- I2C WRITE FAILED -----
-void SetupTimeDS1307Fail(void){
-    
+void SetupTimeDS1307Fail(){ 
     //Send Stop
     IdleI2C();
     StopI2C();
@@ -169,7 +155,7 @@ void ReadByte(unsigned char *target, char type){
  
  */
 ////////////////////////////////////////////////////////////////////////////////
-unsigned char ReadTimeDS1307(RTCTime * readRTCTime) {
+void ReadTimeDS1307(timeStr *dateTime) {
     
     //Send the start condition
     IdleI2C();
@@ -196,38 +182,37 @@ unsigned char ReadTimeDS1307(RTCTime * readRTCTime) {
     }
     
     //Read seconds
-    ReadByte(readRTCTime->seconds, SECONDS);
+    ReadByte(&dateTime->seconds, SECONDS);
     AckI2C(); //Send Ack
     while (SSPCON2bits.ACKEN)                   continue;
-    ReadByte(readRTCTime->minutes, MINUTES);
+    ReadByte(&dateTime->minutes, MINUTES);
     AckI2C(); //Send Ack
     while (SSPCON2bits.ACKEN)                   continue;
-    ReadByte(readRTCTime->hours, HOURS);
+    ReadByte(&dateTime->hours, HOURS);
     AckI2C(); //Send Ack
     while (SSPCON2bits.ACKEN)                   continue;
-    ReadByte(readRTCTime->day, DAY);
+    ReadByte(&dateTime->day, DAY);
     AckI2C(); //Send Ack
     while (SSPCON2bits.ACKEN)                   continue;
-    ReadByte(readRTCTime->date, DATE);
+    ReadByte(&dateTime->date, DATE);
     AckI2C(); //Send Ack
     while (SSPCON2bits.ACKEN)                   continue;
-    ReadByte(readRTCTime->month, MONTH);
+    ReadByte(&dateTime->month, MONTH);
     AckI2C(); //Send Ack
     while (SSPCON2bits.ACKEN)                   continue;
-    ReadByte(readRTCTime->year, YEAR);
+    ReadByte(&dateTime->year, YEAR);
     NotAckI2C(); //Send Ack
     while (SSPCON2bits.ACKEN)                   continue;
-    ReadByte(readRTCTime->year, CONTROL);
+    ReadByte(&dateTime->control, CONTROL);
     NotAckI2C(); //Send Ack
     while (SSPCON2bits.ACKEN)                   continue;
     
     //Send Stop
     IdleI2C();
     StopI2C();
+    
     //Bit indicating Stop is still in progress
     while (SSPCON2bits.PEN)                         continue;
-    
-    return (1);
 }
 
 
@@ -239,42 +224,32 @@ unsigned char GetBinary(unsigned char bcd, char type) {
         case SECONDS:
             binary = (bcd & 0x0F) + (((bcd & 0x70) >> 4) * 10); //(Bit 7 is osc flag bit - dump)
             break;
-            
         case MINUTES:
             binary = (bcd & 0x0f) + (((bcd & 0x70) >> 4) * 10);
             break;
-            
         case HOURS:
             binary = (bcd & 0x0f) + (((bcd & 0x30) >> 4) * 10);
             break;
-            
         case DAY:
             binary = bcd & 0x07;
             break;
-            
         case DATE:
             binary = (bcd & 0x0f) + (((bcd & 0x30) >> 4) * 10);
             break;
-            
         case MONTH:
             binary = (bcd & 0x0f) + (((bcd & 0x10) >> 4) * 10);
             break;
-            
         case YEAR:
             binary = (bcd & 0x0f) + ((bcd >> 4) * 10);
             break;
-
         case CONTROL:
             binary = bcd ;
             break;
-            
         default:
             return 0;
             break;
     }
-    
     return binary;
-    
 }
 
 

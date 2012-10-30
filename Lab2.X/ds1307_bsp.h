@@ -26,40 +26,17 @@ extern "C" {
 #endif
     
 #include <i2c.h>
+#include "Globals.h"   
     
-#define SECONDS 's'
-#define MINUTES 'm'
-#define HOURS 'h'
-#define DAY 'd'
-#define DATE 'D'
-#define MONTH 'M'
-#define YEAR 'Y'
-#define CONTROL 'C'
-    
-    //Structure to define the DateTime in an easily accessible way.
-    struct RTCTime{
-        unsigned char seconds;
-        unsigned char minutes;
-        unsigned char hours;
-        unsigned char day;
-        unsigned char date;
-        unsigned char month;
-        unsigned char year;
-        unsigned char control;
-        
-    };
-    typedef struct RTCTime RTCTime;
-    
-    //Functions
-    void InitDS1307(void);
-    unsigned char SetupTimeDS1307();
-    void SetupTimeDS1307Fail(void);
-    unsigned char ReadTimeDS1307(RTCTime * readRTCTime);
-    //unsigned char WriteByte(unsigned char byte);
-    void ReadByte(unsigned char *target, char type);
-    unsigned char GetBCD( unsigned char binary , char type );
-    unsigned char GetBinary( unsigned char binary , char type );
-    
+void SetupTimeDS1307Fail(void);
+//unsigned char WriteByte(unsigned char byte);
+void ReadByte(unsigned char *target, char type);
+unsigned char GetBCD( unsigned char binary , char type );
+unsigned char GetBinary( unsigned char binary , char type );
+
+void SetupTimeDS1307(timeStr *dateTime);
+void ReadTimeDS1307(timeStr *dateTime);
+
 #ifdef	__cplusplus
 }
 #endif

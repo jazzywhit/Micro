@@ -34,8 +34,7 @@ extern "C" {
 #define DS1307
 #define PPBit0 RA2  // PP Nibble bits
 #define PPTRIS TRISA2=TRISC2=TRISC1=TRISC0 // PP Nibble tristate; allows setting all PP nibble bits as input or output simultaneously
-#define ADC_COMPARE_VALUE 100
-
+#define ADC_COMPARE_VALUE 70
 
 ////////////////////////////////////////////////////////////////////////////////
 //FUNCTION DECLARATIONS
@@ -45,7 +44,7 @@ void InitPorts(void);
 void InitADC(void);
 void InitI2C(void);
 void ProcessADC(unsigned char compare);
-unsigned char ReadADC();
+unsigned char ReadADC(void);
 
 
 #ifdef	__cplusplus
