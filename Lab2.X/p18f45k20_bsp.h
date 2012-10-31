@@ -27,6 +27,7 @@ extern "C" {
 
 #include <p18f45k20.h>
 #include <i2c.h>
+#include "Globals.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //DEFINES
@@ -34,21 +35,17 @@ extern "C" {
 #define DS1307
 #define PPBit0 RA2  // PP Nibble bits
 #define PPTRIS TRISA2=TRISC2=TRISC1=TRISC0 // PP Nibble tristate; allows setting all PP nibble bits as input or output simultaneously
-#define ADC_COMPARE_VALUE 100
-
+#define ADC_COMPARE_VALUE 0x180
 
 ////////////////////////////////////////////////////////////////////////////////
 //FUNCTION DECLARATIONS
 ////////////////////////////////////////////////////////////////////////////////
-void P18f45k20Init();
-void InitPorts();
-void InitADC();
-void InitI2C();
-void ProcessDigitalResult(unsigned char *compare);
-void ParallelStatus();
-void ParallelRead();
-void ParallelWrite();
-unsigned char ReadADC();
+void P18f45k20Init(void);
+void InitPorts(void);
+void InitADC(void);
+void InitI2C(void);
+void ProcessADC(ADCData adcRead);
+ADCData ReadADC(void);
 
 
 #ifdef	__cplusplus

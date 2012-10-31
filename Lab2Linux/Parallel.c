@@ -68,6 +68,21 @@ int Ping();
 void DisplayData(); 
 void ClearTerminal();
 
+//--------------------------- Global Variables -------------------------------
+//Structure to define the DateTime in an easily accessible way.
+//struct RTCData{
+//    unsigned char seconds = 0;
+//    unsigned char minutes = 0;
+//    unsigned char hours = 0;
+//    unsigned char day = 0;
+//    unsigned char date = 0;
+//    unsigned char month = 0;
+//    unsigned char year = 0;
+//    unsigned char control = 0;
+//};
+
+BYTE RTCData[8]; // Decide whether we want to use a struct or Array for this
+unsigned short adcResult = 0;
 
 
 BYTE RTCData[8]; // Decide whether we want to use a struct or Array for this
@@ -302,7 +317,6 @@ int Get(){
     adcResult = ( ParPortRead() << 8 ) & 0x0300; // bit 8 and 9.
     adcResult |= ReadByte(); // ReadByte reads low Byte and
     
-    
     // Read RTC data for all 8 Bytes of information.
     int i ;
     for(i = 0 ; i < 8 ; i++) {
@@ -377,7 +391,6 @@ void DisplayData(){
             break;
     }
    
-    
     printf("\nADC result: %u" , adcResult) ;
     
     //                                                   Hour         Minutes     Seconds          Month        date          year

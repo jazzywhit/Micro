@@ -17,163 +17,190 @@
     Date Created: 10-20-2012
 */
 ////////////////////////////////////////////////////////////////////////////////
+
 #include "parallel_bsp.h"
 #include "ds1307_bsp.h"
-#include <p18f45k20.h>
+#include "p18f45k20_bsp.h"
+#include "Globals.h"
 
-// Read Data Bus
-// Reads data from the parallel port data pins and reconstructs the value as a BYTE
+//Custom Parallel Port Bus Interface.
+#define PortD0 PORTDbits.RD0
+#define PortD1 PORTDbits.RD1
+#define PortD2 PORTDbits.RD2
+#define PortD3 PORTDbits.RD3
+#define STROBE PORTDbits.RD5
+//#define ACKPIN PORTCbits.RD7
 
-BYTE readResult ;
-unsigned char test = 1;
 
-BYTE ReadDataBus(){
+#define WaitForStrobeLow() while (STROBE) continue; //Wait for STROBE LOW
+#define WaitForStrobeHigh() while (!STROBE) continue; //Wait for STROBE HIGH
 
-    readResult = 0;
-    //Grab data
-    readResult = (PortD3 << 3);
-    readResult = (PortD2 << 2);
-    readResult = (PortD1 << 1);
-    readResult = (PortD0);
-
-    readResult &= 0x0F;
-
-    return readResult;
-}
-
-//Read Command
+//--------------------------- CheckParallel () ----------------------------------------
 //Purpose: Read 4 bits from the bus to conclude which command is being used.
 //When Strobe is low
-void ReadCommand(){
+void CheckParallel(timeStr *dateTime) {
 
-    if(STROBE){
-        BYTE command = 0;
-
-        while(STROBE) continue;
-
-        //Read the command from the bus.
-        command = ReadDataBus();
-
-        while(!STROBE) continue;
-
-         switch ( command ) {
+    if (!STROBE){ // If STROBE is LOW
+        unsigned char command = 0;
+        ReadData(&command); //Read the command from the BUS
+        //WaitForStrobeLow() //Wait for STROBE LOW
+        switch (command) {
             case MSG_PING:
-                SendAck(MSG_ACK_PING);
-                while(STROBE) continue;
+                WriteData(MSG_ACK_PING); //Send ack. (Only task)
                 break;
             case MSG_RESET:
-                SendAck(MSG_ACK_RESET);
-                //Reset Data or something.
-                while(STROBE) continue;
+                WriteData(MSG_ACK_RESET); //Send ack.
+                //ResetConnection(); //Reset the connection.
                 break;
             case MSG_GET:
-                SendAck(MSG_ACK_GET);
-                //GetCMD();
-                while(STROBE) continue;
-                break;
-            case MSG_NOTHING:
-                TRUE ;
+                WriteData(MSG_ACK_GET);
+                GetCommand(*dateTime); //Run the GET command
                 break;
             default:
-                return FALSE ;
+                WaitForStrobeHigh() 
+                WaitForStrobeLow()
+                break;
         }
+        
+        //ReadTimeDS1307(&dateTime); //Send the date time construct.
     }
+}
+
+/*--------------------------- ResetConnection () ------------------------------------------------------
+ Purpose     : Reset the connection and all necessary variables.
+ Parameters  : N/A
+ Output      : N/A
+*/
+void ResetConnection(void){
+    ///ADRESH = 0;
+}
+
+/*--------------------------- ReadData () ------------------------------------------------------
+ Purpose     : Read data from the parallel port.
+ Parameters  : N/A
+ Output      : N/A
+*/
+void ReadData(unsigned char *readResult){
+    WaitForStrobeHigh() //Wait for STROBE HIGH
+
+    TRISD |= 0x0F; // Set the port as input
+
+    //Grab data
+    *readResult |= (PortD3 << 3);
+    *readResult |= (PortD2 << 2);
+    *readResult |= (PortD1 << 1);
+    *readResult |= (PortD0);
+
+    *readResult &= 0x0F;
+
+    WaitForStrobeLow() //Wait for STROBE LOW
+    WaitForStrobeHigh() //Wait for STROBE HIGH
 
 }
 
-//SendACK
-//Purpose: Send general acknowledgment
-BYTE SendAck( BYTE msgType){
-    //Select statemtn for the type of ACK.
-//    D3 = ((typeOfAck >> 3) & 1);
-//    D2 = ((typeOfAck >> 2) & 1);
-//    D1 = ((typeOfAck >> 1) & 1);
-//    D0 = ((typeOfAck) & 1);
-    WriteData(msgType);
-}
+/*--------------------------- WriteData () ------------------------------------------------------
+ Purpose     : Write data to the parallel port.
+ Parameters  : N/A
+ Output      : N/A
+*/
+void WriteData(unsigned char data) {
+    WaitForStrobeLow() //Wait for STROBE LOW
 
-//WriteData
-//Purpose: Write 4-bits of data to bus.
-BYTE WriteData(BYTE data){
+    TRISD &= 0xF0; //Set as an output.
 
-    //while(!STROBE);
-    // Set data bus as output
-    //TRISC = 0x0;
-//    PORTDbits.RD0 = 0;;
-//    PORTDbits.RD1 = 1;
-//    PORTDbits.RD2 = 1;
-//    PORTDbits.RD3 = 1;
     PortD3 = ((data >> 3) & 1);
     PortD2 = ((data >> 2) & 1);
     PortD1 = ((data >> 1) & 1);
     PortD0 = ((data) & 1);
 
-    //while(STROBE);
-    //Wait for falling edge
-    return TRUE ; //COME UP WITH A TEST FOR SUCCESS HERE
+    WaitForStrobeHigh() //Linux Reading
+    WaitForStrobeLow() //Linux Done Reading
+
+    PortD3 = 0;
+    PortD2 = 0;
+    PortD1 = 0;
+    PortD0 = 0;
+    
+    WaitForStrobeHigh()
+//        while (!STROBE) continue; //Remain here while the strobe remains high
 }
 
-
-BYTE HighNibble(BYTE byte){
-
-    return (byte>>4) & 0x0F ;
+/*--------------------------- HighNibble () ------------------------------------------------------
+ Purpose     : Make a high nibble
+ Parameters  : N/A
+ Output      : N/A
+*/
+BYTE HighNibble(BYTE byte) {
+    return (byte >> 4) & 0x0F;
 }
 
-
-BYTE LowNibble(BYTE byte){
-
-    return  byte & 0x0F ;
+/*--------------------------- LowNibble () ------------------------------------------------------
+ Purpose     : Make a low nibble
+ Parameters  : N/A
+ Output      : N/A
+*/
+BYTE LowNibble(BYTE byte) {
+    return byte & 0x0F;
 }
 
-//GetCMD
-//Purpose: Handles the Get command operationg
+/*--------------------------- GetCommand () ------------------------------------------------------
+ Purpose     : Send the ADC and then send the Time
+ Parameters  : N/A
+ Output      : N/A
+*/
+void GetCommand(timeStr dateTime){
+    SendADC(); //Start with the ADC first.
+    SendTime(dateTime); //Finish with the time.
+}
 
-BYTE GetCMD(){
-//
-//    unsigned adcRead = 0;
-//
-//    adcRead = ReadADC(); //Get the value from the ADC
-//    ProcessDigitalResult(&adcRead); //Send the value to turn LED on/off // Might have to be modified for lab 2
-////    ReadTimeDS1307(&RTCData.seconds,
-//            &RTCData.minutes,
-//            &RTCData.hours,
-//            &RTCData.day,
-//            &RTCData.date,
-//            &RTCData.month,
-//            &RTCData.year,
-//            &RTCData.control); //Get data from RTC (DS1307).
-//
-//    // 3 ADC nibles-------------------------------------------ADC MUST BE RECONFIGURED TO 12 bit precision
-//    // Manipulate unsigned into 3 nibbles
-//    WriteData(0xFF);
-//    WriteData(0xFF);
-//    WriteData(0xFF);
-//
-//
-//    // 8 RTC values
-//     WriteData(HighNibble(RTCData.seconds));
-//     WriteData(LowNibble(RTCData.seconds));
-//
-//     WriteData(HighNibble(RTCData.minutes));
-//     WriteData(LowNibble(RTCData.minutes));
-//
-//     WriteData(LowNibble(RTCData.hours));
-//     WriteData(LowNibble(RTCData.hours));
-//
-//     WriteData(LowNibble(RTCData.day));
-//     WriteData(LowNibble(RTCData.day));
-//
-//     WriteData(LowNibble(RTCData.date));
-//     WriteData(LowNibble(RTCData.date));
-//
-//     WriteData(LowNibble(RTCData.month));
-//     WriteData(LowNibble(RTCData.month));
-//
-//     WriteData(LowNibble(RTCData.year));
-//     WriteData(LowNibble(RTCData.year));
-//
-//     WriteData(LowNibble(RTCData.control));
-//     WriteData(LowNibble(RTCData.control));
-//
+/*--------------------------- SendADC () ------------------------------------------------------
+ Purpose     : Write data to the parallel port.
+ Parameters  : N/A
+ Output      : N/A
+*/
+void SendADC(void){
+    
+    ADCData adcRead = ReadADC();
+    WriteData(1);
+    WriteData(2);
+    WriteData(3);
+//    WriteData(adcRead.write.hbits);
+//    WriteData(adcRead.write.mbits);
+//    WriteData(adcRead.write.lbits);
+//    WriteData((adcRead & 0x0300) >> 8 );
+//    WriteData((adcRead & 0x00F0) >> 4 );
+//    WriteData(adcRead & 0x000F );
+}
+
+void WriteByte(BYTE byte){
+
+    WriteData(HighNibble(byte));
+    WriteData(LowNibble(byte));
+}
+/*--------------------------- SendTime () ------------------------------------------------------
+ Purpose     : Send the time data over the parallel port.
+ Parameters  : N/A
+ Output      : N/A
+*/
+void SendTime(timeStr dateTime) { 
+    /////////////////////////////16 RTC WRITES//////////////////////////////
+    //TRISD = 0b01101111;
+//    WriteByte(19);
+//    WriteByte(46);
+//    WriteByte(20);
+//    WriteByte(3);
+//    WriteByte(30);
+//    WriteByte(10);
+//    WriteByte(12);
+//    WriteByte(255);
+    WriteByte(dateTime.seconds);
+    WriteByte(dateTime.minutes);
+    WriteByte(dateTime.hours);
+    WriteByte(dateTime.day);
+    WriteByte(dateTime.date);
+    WriteByte(dateTime.month);
+    WriteByte(dateTime.year);
+    WriteByte(dateTime.control);
+    WriteData(MSG_ACK_GET); //Send a final ack to make sure it knows we are finished.
 }
 

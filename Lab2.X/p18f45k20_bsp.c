@@ -19,6 +19,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "p18f45k20_bsp.h"
+#include "Globals.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -29,11 +30,11 @@
         Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
-void P18f45k20Init()
+void P18f45k20Init(void)
 {
     InitPorts();
-   // InitADC();
-   // InitI2C();
+    InitADC();
+    InitI2C();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -44,7 +45,7 @@ void P18f45k20Init()
         Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
-void InitI2C()
+void InitI2C(void)
 {
     //Functions we can use
     SSPADD = 0x27; //Fosc = 16 MHz , Fcy = 4 MHz , Fscl = 100 kHz
@@ -60,13 +61,28 @@ void InitI2C()
         Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
-unsigned char ReadADC()
+ADCData ReadADC()
 {
+    //unsigned char result = 0;
+    ADCData newRead;
+
     ADCON0bits.GO_DONE = 1; //Start Conversion.
     while(ADCON0bits.GO_DONE) {
         continue ; //While conversion is not completed. Loop.
     }
-    return ADRESH;
+
+    // ADRESH holds the MSbit's of the ADC conversion
+//    result = ((ADRESH & 0x03) << 3); // Mask out everything but the bit 1 and 0.
+//    result = result << 3 ;    // Shift MSBits to bit position 8 and 9
+    newRead.allbits = 0;
+    newRead.read.adresh = (ADRESH & 0x03);// << 3);
+    newRead.read.adresl = (ADRESL);
+    
+
+    // ADRESL holds the LSB of the ADC conversion
+//    result |= ADRESL;
+
+    return newRead;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,9 +94,9 @@ unsigned char ReadADC()
  *      Info        : The ADC_COMPARE_VALUE value will change based on the room conditions.
 */
 ////////////////////////////////////////////////////////////////////////////////
-void ProcessDigitalResult(unsigned char *compare)
+void ProcessADC(ADCData adcRead)
 {
-    if(*compare < ADC_COMPARE_VALUE) //If it is dark the voltage will be around (.3-.4)V
+    if(adcRead.allbits < ADC_COMPARE_VALUE) //If it is dark the voltage will be around (.3-.4)V
         PORTDbits.RD7 = 1; // LED Will turn Off/On depending on comparision.
     else
 	PORTDbits.RD7 = 0;
@@ -94,39 +110,38 @@ void ProcessDigitalResult(unsigned char *compare)
         Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
-void InitADC()
+void InitADC(void)
 {
     //1. Configure the RA0/AN0 pin as an analog input in ANSEL.
-            ANSELbits.ANS0 = 1;     // Disable Digital Input Buffer for Analog select control bit. (Data Sheet PAGE )
+    ANSELbits.ANS0 = 1;     // Disable Digital Input Buffer for Analog select control bit. (Data Sheet PAGE )
 
     //2. Set the ADC voltage references in ADCON1.
-            ADCON1bits.VCFG0 = 0;  //Positive Voltage Reference select bit supplied by VDD. (Data Sheet PAGE 272)
-            ADCON1bits.VCFG1 = 0;  //Negative Voltage Reference select bit supplied by VSS. (Data Sheet PAGE 272)
+    ADCON1bits.VCFG0 = 0;  //Positive Voltage Reference select bit supplied by VDD. (Data Sheet PAGE 272)
+    ADCON1bits.VCFG1 = 0;  //Negative Voltage Reference select bit supplied by VSS. (Data Sheet PAGE 272)
 
     //3. Set the result justification, ADC clock source, and acquisition time in ADCON2.
-            ADCON2 = 0b00111000; // Left Justified (7), Not Used (6), Aquisition Time 20 TAD (3-5),Conversion Clock Time FOSC/2 (0-2) (Data Sheet PAGE 273)
+    ADCON2 = 0b10111000; // Right Justified (7), Not Used (6), Aquisition Time 20 TAD (3-5),Conversion Clock Time FOSC/2 (0-2) (Data Sheet PAGE 273)
 
     //4. Select the channel and turn on the ADC in ADCON0.
-            ADCON0 = 0b00000001; // Not Used(7-6), Analog Channel select AN0 (5-2), A/D Conversion Status Bit (1), ADC Enable (0) (Data Sheet PAGE 271)
+    ADCON0 = 0b00000001; // Not Used(7-6), Analog Channel select AN0 (5-2), A/D Conversion Status Bit (1), ADC Enable (0) (Data Sheet PAGE 271)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //void InitPorts()
 /*
-        Purpose     : Initialize PIC PORTS for I/O Pins
-        Parameters  : N/A
-        Output      : N/A
+    Purpose     : Initialize PIC PORTS for I/O Pins
+    Parameters  : N/A
+    Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
-void InitPorts()
+void InitPorts(void)
 {
     //Setup Port A to communicate with the ADC
     // ANO (PIN 2) Input pin for ADC conversion.
     TRISA = 0b11111111;     // PORTA bit 0 set to 1 so AN0 can be the analog input voltage from light sensor
-    TRISC = 0x11111111; //turn on tri-state register. The pins should be set to input for the I2C bus.
+    TRISC = 0b11111111; //turn on tri-state register. The pins should be set to input for the I2C bus.
 
     //Setup PortD to attach to the LED
-    TRISD = 0b01111111;// PORTD bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
-    TRISE = 0b11111111; //PORTE set as input. We are going to be using this port for part of our parallel port com.
+    TRISD = 0b01101111;// PORTD bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
 
 }

@@ -19,6 +19,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "hd44780_bsp.h"
+
 void InitHD44780(){
    OpenXLCD(FOUR_BIT & LINES_5X7); //Set 4bit communication with 5x7 characters on two lines.
 }
