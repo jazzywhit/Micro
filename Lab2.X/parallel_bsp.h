@@ -31,9 +31,10 @@ extern "C" {
 void CheckParallel(timeStr *dateTime);
 void ReadData(unsigned char *readResult);
 void WriteData(unsigned char data); //Write 4 bit data on the bus
-void GetCommand(timeStr *dateTime);
+void WriteByte(BYTE byte);
+void GetCommand(timeStr dateTime);
 void SendADC(void);
-void SendTime(timeStr *dateTime); //Send the Time to Linux
+void SendTime(timeStr dateTime); //Send the Time to Linux
 void ResetConnection(void);
 
 #ifdef	__cplusplus

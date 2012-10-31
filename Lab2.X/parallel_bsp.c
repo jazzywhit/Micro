@@ -31,39 +31,40 @@
 #define STROBE PORTDbits.RD5
 //#define ACKPIN PORTCbits.RD7
 
+
+#define WaitForStrobeLow() while (STROBE) continue; //Wait for STROBE LOW
+#define WaitForStrobeHigh() while (!STROBE) continue; //Wait for STROBE HIGH
+
 //--------------------------- CheckParallel () ----------------------------------------
 //Purpose: Read 4 bits from the bus to conclude which command is being used.
 //When Strobe is low
 void CheckParallel(timeStr *dateTime) {
 
-    if (!STROBE){
+    if (!STROBE){ // If STROBE is LOW
         unsigned char command = 0;
-        
-        while (!STROBE) continue; //Wait for STROBE HIGH
-
         ReadData(&command); //Read the command from the BUS
-        while (STROBE) continue; //Wait for STROBE LOW
-        
-        while (!STROBE) continue; //Wait for STROBE HIGH
-        while (STROBE) continue; //Wait for STROBE LOW
-
+        //WaitForStrobeLow() //Wait for STROBE LOW
         switch (command) {
             case MSG_PING:
                 WriteData(MSG_ACK_PING); //Send ack. (Only task)
                 break;
             case MSG_RESET:
                 WriteData(MSG_ACK_RESET); //Send ack.
-                ResetConnection(); //Reset the connection.
+                //ResetConnection(); //Reset the connection.
                 break;
             case MSG_GET:
-                GetCommand(dateTime); //Run the GET command
+                WriteData(MSG_ACK_GET);
+                GetCommand(*dateTime); //Run the GET command
                 break;
             default:
-                while (!STROBE) continue; //Remain here while the strobe remains high
+                WaitForStrobeHigh() 
+                WaitForStrobeLow()
                 break;
         }
+        
+        //ReadTimeDS1307(&dateTime); //Send the date time construct.
     }
-
+ 
 }
 
 /*--------------------------- ResetConnection () ------------------------------------------------------
@@ -72,7 +73,7 @@ void CheckParallel(timeStr *dateTime) {
  Output      : N/A
 */
 void ResetConnection(void){
-    ADRESH = 0;
+    ///ADRESH = 0;
 }
 
 /*--------------------------- ReadData () ------------------------------------------------------
@@ -81,6 +82,8 @@ void ResetConnection(void){
  Output      : N/A
 */
 void ReadData(unsigned char *readResult){
+    WaitForStrobeHigh() //Wait for STROBE HIGH
+
     TRISD |= 0x0F; // Set the port as input
 
     //Grab data
@@ -90,6 +93,10 @@ void ReadData(unsigned char *readResult){
     *readResult |= (PortD0);
 
     *readResult &= 0x0F;
+
+    WaitForStrobeLow() //Wait for STROBE LOW
+    WaitForStrobeHigh() //Wait for STROBE HIGH
+
 }
 
 /*--------------------------- WriteData () ------------------------------------------------------
@@ -98,6 +105,8 @@ void ReadData(unsigned char *readResult){
  Output      : N/A
 */
 void WriteData(unsigned char data) {
+    WaitForStrobeLow() //Wait for STROBE LOW
+
     TRISD &= 0xF0; //Set as an output.
 
     PortD3 = ((data >> 3) & 1);
@@ -105,15 +114,16 @@ void WriteData(unsigned char data) {
     PortD1 = ((data >> 1) & 1);
     PortD0 = ((data) & 1);
 
-    while(!STROBE) continue; //Linux Reading
-    while(STROBE) continue; //Linux Done Reading
+    WaitForStrobeHigh() //Linux Reading
+    WaitForStrobeLow() //Linux Done Reading
 
     PortD3 = 0;
     PortD2 = 0;
     PortD1 = 0;
     PortD0 = 0;
-
-    while (!STROBE) continue; //Remain here while the strobe remains high
+    
+    WaitForStrobeHigh()
+//        while (!STROBE) continue; //Remain here while the strobe remains high
 }
 
 /*--------------------------- HighNibble () ------------------------------------------------------
@@ -134,14 +144,12 @@ BYTE LowNibble(BYTE byte) {
     return byte & 0x0F;
 }
 
-
-
 /*--------------------------- GetCommand () ------------------------------------------------------
  Purpose     : Send the ADC and then send the Time
  Parameters  : N/A
  Output      : N/A
 */
-void GetCommand(timeStr *dateTime){
+void GetCommand(timeStr dateTime){
     SendADC(); //Start with the ADC first.
     SendTime(dateTime); //Finish with the time.
 }
@@ -153,82 +161,47 @@ void GetCommand(timeStr *dateTime){
 */
 void SendADC(void){
     
-    unsigned char adcRead = ReadADC();
-
-    WriteData( (adcRead & 0x0300) >> 8 );
-
-    WriteData( (adcRead & 0x00F0) >> 4 );
-
-    WriteData( adcRead & 0x000F );
+    ADCData adcRead = ReadADC();
+    WriteData(1);
+    WriteData(2);
+    WriteData(3);
+//    WriteData(adcRead.write.hbits);
+//    WriteData(adcRead.write.mbits);
+//    WriteData(adcRead.write.lbits);
+//    WriteData((adcRead & 0x0300) >> 8 );
+//    WriteData((adcRead & 0x00F0) >> 4 );
+//    WriteData(adcRead & 0x000F );
 }
 
+void WriteByte(BYTE byte){
+
+    WriteData(HighNibble(byte));
+    WriteData(LowNibble(byte));
+}
 /*--------------------------- SendTime () ------------------------------------------------------
  Purpose     : Send the time data over the parallel port.
  Parameters  : N/A
  Output      : N/A
 */
-void SendTime(timeStr *dateTime) {
-    
-     //Get time from RTC
+void SendTime(timeStr dateTime) { 
     /////////////////////////////16 RTC WRITES//////////////////////////////
-    // Seconds
-    //-----------------------------------------------------------STROBE HIGH
-    WriteData(HighNibble (dateTime->seconds));
-
-
-     //-----------------------------------------------------------STROBE HIGH
-    WriteData(LowNibble (dateTime->seconds));
-
-    //-----------------------------------------------------------STROBE HIGH
-    // Minutes
-    WriteData(HighNibble(dateTime->minutes));
-
-    //-----------------------------------------------------------STROBE HIGH
-    WriteData(LowNibble(dateTime->minutes));
-
-    //-----------------------------------------------------------STROBE HIGH
-    // Hour
-    WriteData(HighNibble(dateTime->hours));
-
-    //-----------------------------------------------------------STROBE HIGH
-    WriteData(LowNibble(dateTime->hours));
-
-    //-----------------------------------------------------------STROBE HIGH
-    // Day
-    WriteData(HighNibble(dateTime->day));
-
-    //-----------------------------------------------------------STROBE HIGH
-    WriteData(LowNibble(dateTime->day));
-
-
-    //-----------------------------------------------------------STROBE HIGH
-    // Date
-    WriteData(HighNibble(dateTime->date));
-
-    //-----------------------------------------------------------STROBE HIGH
-    WriteData(LowNibble(dateTime->date));
-
-
-    //-----------------------------------------------------------STROBE HIGH
-    // Month
-    WriteData(HighNibble(dateTime->month));
-
-    //-----------------------------------------------------------STROBE HIGH
-    WriteData(LowNibble(dateTime->month));
-
-    //-----------------------------------------------------------STROBE HIGH
-    // Year
-    WriteData(HighNibble(dateTime->year));
-
-    //-----------------------------------------------------------STROBE HIGH
-    WriteData(LowNibble(dateTime->year));
-
-    //-----------------------------------------------------------STROBE HIGH
-    // Date
-    WriteData(HighNibble(dateTime->control));
-
-    //-----------------------------------------------------------STROBE HIGH
-    WriteData(LowNibble(dateTime->control));
-
+    //TRISD = 0b01101111;
+//    WriteByte(19);
+//    WriteByte(46);
+//    WriteByte(20);
+//    WriteByte(3);
+//    WriteByte(30);
+//    WriteByte(10);
+//    WriteByte(12);
+//    WriteByte(255);
+    WriteByte(dateTime.seconds);
+    WriteByte(dateTime.minutes);
+    WriteByte(dateTime.hours);
+    WriteByte(dateTime.day);
+    WriteByte(dateTime.date);
+    WriteByte(dateTime.month);
+    WriteByte(dateTime.year);
+    WriteByte(dateTime.control);
+    WriteData(MSG_ACK_GET); //Send a final ack to make sure it knows we are finished.
 }
 

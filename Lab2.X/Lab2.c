@@ -41,12 +41,12 @@ void main()
     P18f45k20Init(); //Initialize the board and all necesary ports.
     //InitHD44780();  //Initialize the LCD Board
     //SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &month, &year); ****ONLY NEED TO DO THIS ONCE****
-
+    //ReadTimeDS1307(&dateTime); //Send the date time construct.
     while(1)
     {
-        //ProcessADC(ReadADC()); //Send the value to turn LED on/off
-        //ReadTimeDS1307(&dateTime); //Send the date time construct.
-        CheckParallel(&dateTime); //Check the Parallel Port for Communications.
+        ReadTimeDS1307(&dateTime); //Send the date time construct.
+        ProcessADC(ReadADC()); //Send the value to turn LED on/off
+        //CheckParallel(&dateTime); //Check the Parallel Port for Communications.
         continue;
     }
 }

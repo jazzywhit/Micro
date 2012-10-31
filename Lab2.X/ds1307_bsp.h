@@ -29,8 +29,8 @@ extern "C" {
 #include "Globals.h"   
     
 void SetupTimeDS1307Fail(void);
-//unsigned char WriteByte(unsigned char byte);
-void ReadByte(unsigned char *target, char type);
+unsigned char Write(unsigned char byte);
+void Read(unsigned char *target, char type);
 unsigned char GetBCD( unsigned char binary , char type );
 unsigned char GetBinary( unsigned char binary , char type );
 

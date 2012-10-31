@@ -19,6 +19,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "p18f45k20_bsp.h"
+#include "Globals.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -60,9 +61,10 @@ void InitI2C(void)
         Output      : N/A
 */
 ////////////////////////////////////////////////////////////////////////////////
-unsigned char ReadADC(void)
+ADCData ReadADC()
 {
-    unsigned char result = 0;
+    //unsigned char result = 0;
+    ADCData newRead;
 
     ADCON0bits.GO_DONE = 1; //Start Conversion.
     while(ADCON0bits.GO_DONE) {
@@ -70,13 +72,17 @@ unsigned char ReadADC(void)
     }
 
     // ADRESH holds the MSbit's of the ADC conversion
-    result = ADRESH & 0x03  ; // Mask out everything but the bit 1 and 0.
-    result = result << 3 ;    // Shift MSBits to bit position 8 and 9
+//    result = ((ADRESH & 0x03) << 3); // Mask out everything but the bit 1 and 0.
+//    result = result << 3 ;    // Shift MSBits to bit position 8 and 9
+    newRead.allbits = 0;
+    newRead.read.adresh = (ADRESH & 0x03);// << 3);
+    newRead.read.adresl = (ADRESL);
+    
 
     // ADRESL holds the LSB of the ADC conversion
-    result |= ADRESL;
+//    result |= ADRESL;
 
-    return result;
+    return newRead;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -88,9 +94,9 @@ unsigned char ReadADC(void)
  *      Info        : The ADC_COMPARE_VALUE value will change based on the room conditions.
 */
 ////////////////////////////////////////////////////////////////////////////////
-void ProcessADC(unsigned char compare)
+void ProcessADC(ADCData adcRead)
 {
-    if(compare < ADC_COMPARE_VALUE) //If it is dark the voltage will be around (.3-.4)V
+    if(adcRead.allbits < ADC_COMPARE_VALUE) //If it is dark the voltage will be around (.3-.4)V
         PORTDbits.RD7 = 1; // LED Will turn Off/On depending on comparision.
     else
 	PORTDbits.RD7 = 0;

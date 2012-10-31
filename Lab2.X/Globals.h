@@ -25,6 +25,19 @@ typedef struct{
 }timeStr;
 
 typedef union{
+    unsigned int allbits;
+    struct{
+       unsigned adresl:8;
+       unsigned adresh:2;
+    }read;
+    struct{
+        unsigned lbits:4;
+        unsigned mbits:4;
+        unsigned hbits:2;
+    }write;
+}ADCData;
+
+typedef union{
     struct{
         unsigned low:4;
         unsigned high:4;
