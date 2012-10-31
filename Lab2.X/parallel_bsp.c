@@ -64,7 +64,6 @@ void CheckParallel(timeStr *dateTime) {
         
         //ReadTimeDS1307(&dateTime); //Send the date time construct.
     }
- 
 }
 
 /*--------------------------- ResetConnection () ------------------------------------------------------

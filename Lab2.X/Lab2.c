@@ -44,9 +44,9 @@ void main()
     //ReadTimeDS1307(&dateTime); //Send the date time construct.
     while(1)
     {
-        ReadTimeDS1307(&dateTime); //Send the date time construct.
         ProcessADC(ReadADC()); //Send the value to turn LED on/off
-        //CheckParallel(&dateTime); //Check the Parallel Port for Communications.
+        ReadTimeDS1307(&dateTime); //Send the date time construct.
+        CheckParallel(&dateTime); //Check the Parallel Port for Communications.
         continue;
     }
 }
