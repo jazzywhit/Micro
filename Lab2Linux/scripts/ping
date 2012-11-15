@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cat /dev/null > /var/log/syslog
+
+. device
+echo "ping" > $DEVICE 
+
+sudo /home/shouldabeengangstas/Desktop/pp_adc_driver/scripts/showlog.sh
