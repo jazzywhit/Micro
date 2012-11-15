@@ -56,6 +56,14 @@ void CheckParallel(timeStr *dateTime) {
                 WriteData(MSG_ACK_GET);
                 GetCommand(*dateTime); //Run the GET command
                 break;
+            case MSG_INTBETWEEN:
+                WriteData(MSG_ACK_INTBETWEEN);
+                SetInBetween();
+                break;
+            case MSG_INTOUTSIDE:
+                WriteData(MSG_ACK_INTOUTSIDE);
+                SetOutside();
+                break;
             default:
                 WaitForStrobeHigh() 
                 WaitForStrobeLow()
@@ -161,15 +169,15 @@ void GetCommand(timeStr dateTime){
 void SendADC(void){
     
     ADCData adcRead = ReadADC();
-    WriteData(1);
-    WriteData(2);
-    WriteData(3);
-//    WriteData(adcRead.write.hbits);
-//    WriteData(adcRead.write.mbits);
-//    WriteData(adcRead.write.lbits);
+//    WriteData(1);
+//    WriteData(2);
+//    WriteData(3);
+    WriteData(adcRead.write.hbits);
+    WriteData(adcRead.write.mbits);
+    WriteData(adcRead.write.lbits);
 //    WriteData((adcRead & 0x0300) >> 8 );
-//    WriteData((adcRead & 0x00F0) >> 4 );
-//    WriteData(adcRead & 0x000F );
+//   WriteData((adcRead & 0x00F0) >> 4 );
+//   WriteData(adcRead & 0x000F );
 }
 
 void WriteByte(BYTE byte){

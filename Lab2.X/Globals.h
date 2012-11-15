@@ -45,16 +45,32 @@ typedef union{
     unsigned all:8;
 } ByteParts;
 
+typedef struct{
+    unsigned char high;
+    unsigned char low;
+    unsigned char outside;
+}ADCControl;
+
+#define  PARPORT_ACK PORTDbits.RD6
 #define BYTE unsigned char
 
     //Parallel Port Commands
 #define MSG_RESET 0x03
 #define MSG_ACK_RESET 0x0D
+
 #define MSG_PING 0x01
 #define MSG_ACK_PING 0x0E
+
 #define MSG_GET 0x02
 #define MSG_ACK_GET 0x0C
+
 #define MSG_NOTHING 0x0F
+
+#define MSG_INTBETWEEN 0x5
+#define MSG_ACK_INTBETWEEN 0x7
+
+#define MSG_INTOUTSIDE 0x6
+#define MSG_ACK_INTOUTSIDE 0x8
 
 #define TRUE 1
 #define FALSE 0

@@ -44,7 +44,7 @@ void P18f45k20Init(void);
 void InitPorts(void);
 void InitADC(void);
 void InitI2C(void);
-void ProcessADC(ADCData adcRead);
+void ProcessADC(ADCData adcRead,ADCControl adcControl);
 ADCData ReadADC(void);
 
 

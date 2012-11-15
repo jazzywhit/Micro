@@ -77,7 +77,7 @@ ADCData ReadADC()
     newRead.allbits = 0;
     newRead.read.adresh = (ADRESH & 0x03);// << 3);
     newRead.read.adresl = (ADRESL);
-    
+
 
     // ADRESL holds the LSB of the ADC conversion
 //    result |= ADRESL;
@@ -94,14 +94,24 @@ ADCData ReadADC()
  *      Info        : The ADC_COMPARE_VALUE value will change based on the room conditions.
 */
 ////////////////////////////////////////////////////////////////////////////////
-void ProcessADC(ADCData adcRead)
-{
-    if(adcRead.allbits < ADC_COMPARE_VALUE) //If it is dark the voltage will be around (.3-.4)V
+
+void ProcessADC(ADCData adcRead, ADCControl adcControl) {
+    if (adcRead.allbits < ADC_COMPARE_VALUE) //If it is dark the voltage will be around (.3-.4)V
         PORTDbits.RD7 = 1; // LED Will turn Off/On depending on comparision.
     else
-	PORTDbits.RD7 = 0;
-}
+        PORTDbits.RD7 = 0;
 
+    if (adcControl.outside) {
+        if ((unsigned int) adcRead.allbits > adcControl.high || (unsigned int) adcRead.allbits < adcControl.low)
+            PARPORT_ACK = 1;
+        else PARPORT_ACK = 0;
+    } else {
+        if ((unsigned int) adcRead.allbits < adcControl.high && (unsigned int) adcRead.allbits > adcControl.low)
+            PARPORT_ACK = 1;
+        else PARPORT_ACK = 0;
+    }
+
+}
 ////////////////////////////////////////////////////////////////////////////////
 //void InitADC()
 /*
@@ -142,6 +152,6 @@ void InitPorts(void)
     TRISC = 0b11111111; //turn on tri-state register. The pins should be set to input for the I2C bus.
 
     //Setup PortD to attach to the LED
-    TRISD = 0b01101111;// PORTD bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
+    TRISD = 0b00101111;// PORTD bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
 
 }
