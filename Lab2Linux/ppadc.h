@@ -27,7 +27,7 @@
 
 // ADC Device Responses
 //#define MSG_ACK        0xE
-#define MSG_ACK_GET 0xC           // Get Acknowledgment Command. 
+#define MSG_ACK_GET    0xC           // Get Acknowledgment Command. 
 #define MSG_NOTHING    0xF
 
 // Host Driver Commands

@@ -615,6 +615,9 @@ void DisplayData(unsigned char *RTCData, unsigned char *adcResult){
  * Returns:    0-1023 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_get(struct pp_adc *p, int params[2]){
+
+    printk(KERN_INFO "In Get\n");
+
     unsigned char ackResult;
     unsigned char adcResult;
     unsigned char RTCData[8];
@@ -692,9 +695,9 @@ static int hook_open(struct inode *inodep, struct file *filp){
 	printk(KERN_INFO "%s: %s claimed\n", DRIVER_NAME, p->name);
 
 	// Try to communicate with the device
-	//for(i=0; i<4; i++)
-	//	if(cmd_ping(p, NULL)>=0)
-	//		return 0; // Device responded
+	for(i=0; i<4; i++)
+		if(cmd_ping(p, NULL)>=0)
+			return 0; // Device responded
 
 	// Device did not respond
 	parport_release(p->pardev);
@@ -729,31 +732,31 @@ static ssize_t hook_read(struct file *filp, char __user *buffer, size_t size, lo
 	int count;
 	char kbuf[STRING_BUFFER_SIZE];
 
-        // read ADC value from sensor
-    if(*offset!=0)
-        return 0;
+	// read ADC value from sensor
+	if(*offset!=0)
+		return 0;
 
-    printk(KERN_INFO "Read function\n");
-    // If we made it here, then the port has been claimed!
-    p->claimed=1;
-    printk(KERN_INFO "%s: %s claimed\n", DRIVER_NAME, p->name);
+	printk(KERN_INFO "Read function\n");
 
-     // Try to communicate with the device
-    value = cmd_get(p,0);
-     
-     // Store "int value" as an ASCII string to be copied
-     count=snprintf(kbuf, STRING_BUFFER_SIZE, "%d", value);
-     
-     printk(KERN_INFO "ADC Value:%d\n",value);
-    
-    // Device did not respond
-    parport_release(p->pardev);
-    p->claimed=0;
+	// If we made it here, then the port has been claimed!
+	p->claimed=1;
+	printk(KERN_INFO "%s: %s claimed\n", DRIVER_NAME, p->name);
 
+	// Try to communicate with the device
+	value = cmd_get(p,0);
 
-    // copy data to user space
-    copy_to_user(buffer, kbuf, MIN(count,size));
-    return size;
+	// Store "int value" as an ASCII string to be copied
+	count=snprintf(kbuf, STRING_BUFFER_SIZE, "%d", value);
+
+	printk(KERN_INFO "ADC Value:%d\n",value);
+
+	// Device did not respond
+	parport_release(p->pardev);
+	p->claimed=0;
+
+	// copy data to user space
+	copy_to_user(buffer, kbuf, MIN(count,size));
+	return size;
 }
 
 /* hook_write
