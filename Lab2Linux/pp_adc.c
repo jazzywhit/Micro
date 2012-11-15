@@ -35,6 +35,12 @@ MODULE_DESCRIPTION("Some Desc");
 #define STRING_BUFFER_SIZE 0x20
 #define MIN(a,b) (a<b ? a : b)
 
+
+
+//Function Definitions
+//unsigned char ReadByte(struct pp_adc *p);
+//void DisplayData();
+
 //////////////////////////////////////////////////////
 // Structure Delarations
 
@@ -544,6 +550,62 @@ static int cmd_outside(struct pp_adc *p, int params[2]){
 	return 0;
 }
 
+//--------------------------------- Read Byte --------------------------------------------
+//Purpose: Read an entire byte by breaking it up into 4-bit parts.
+
+unsigned char ReadByte(struct pp_adc *p){
+ 
+  unsigned char byte;
+  
+  //Reconstruct the two 4bit messages into a byte
+  byte = (readPPNibble(p)<<4) & 0xF0;
+
+  byte |= readPPNibble(p);
+  
+  return byte;  
+}
+
+//------------------------------- DisplayData --------------------------------------------
+//Purpose: Diaplay the ADC and RTC data retreived from the PIC. 
+
+void DisplayData(unsigned char *RTCData, unsigned char *adcResult){
+    
+    char day ;
+    
+    switch ( RTCData[3] ) {
+        case 2:
+            day = 'M';
+            break;
+        case 3:
+            day = 'T';
+            break;
+        case 4:
+            day = 'W';
+            break;
+        case 5:
+            day = 'R';
+            break;
+        case 6:
+            day = 'F';
+            break;
+        case 7:
+            day = 'S';
+            break;
+        case 1:
+            day = 'U';
+            break;
+        default:
+            break;
+    }
+   
+    
+    printk(KERN_INFO "\nADC result: %u" , *adcResult) ;
+    
+    //                                                   Hour         Minutes     Seconds          Month        date          year
+    printk(KERN_INFO "\nTime: %02u:%02u:%02u %c %02u/%02u/20%02u" , RTCData[2], RTCData[1], RTCData[0], day, RTCData[5], RTCData[4], RTCData[6] );
+
+}
+
 /* cmd_get
  * Purpose:    Request's the device's ADC value and resets the pp_adc's irq_counter to 0
  * Parameters: Pointer to a pp_adc struct
@@ -553,9 +615,46 @@ static int cmd_outside(struct pp_adc *p, int params[2]){
  * Returns:    0-1023 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_get(struct pp_adc *p, int params[2]){
+    unsigned char ackResult;
+    unsigned char adcResult;
+    unsigned char RTCData[8];
+    
+    //Write GET Command to PIC.
+    writePPNibble(p, MSG_GET);
 
-	return 0;
+   //Read the ACK from the GET on the data line.
+    ackResult=readPPNibble(p);
+    
+    if(ackResult != MSG_ACK_GET) {
+      printk(KERN_INFO "\nStatus: Get command failed");
+        return 0 ;
+    }
+    
+    //Read 3 ADC Nibles and assemble them
+    adcResult = ( readPPNibble(p) << 8 ) & 0x0300; // bit 8 and 9.
+    adcResult |= ReadByte(p); // ReadByte reads low Byte and
+    
+    
+    // Read RTC data for all 8 Bytes of information.
+    int i ;
+    for(i = 0 ; i < 8 ; i++) {
+      RTCData[i] = ReadByte(p) ;
+    }
+    
+    //Read the ACK from the GET on the data line.
+    ackResult = readPPNibble(p);
+    
+    if( ackResult != MSG_ACK_GET) {
+      printk(KERN_INFO "\nStatus: Get command failed");
+        return 0 ;
+    }
+    
+      // Display Data
+    DisplayData(RTCData, &adcResult);
+    
+    return 1;
 }
+
 
 ///////////////////////////////////////////////////////
 // Character device file operations
@@ -593,9 +692,9 @@ static int hook_open(struct inode *inodep, struct file *filp){
 	printk(KERN_INFO "%s: %s claimed\n", DRIVER_NAME, p->name);
 
 	// Try to communicate with the device
-	for(i=0; i<4; i++)
-		if(cmd_ping(p, NULL)>=0)
-			return 0; // Device responded
+	//for(i=0; i<4; i++)
+	//	if(cmd_ping(p, NULL)>=0)
+	//		return 0; // Device responded
 
 	// Device did not respond
 	parport_release(p->pardev);

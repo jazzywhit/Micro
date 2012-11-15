@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#genmake before everything
+./genmake
+
 #uninstall
 rmmod pp_adc.ko
 rm /dev/pp0adc
