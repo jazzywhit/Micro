@@ -49,6 +49,7 @@ typedef struct{
     unsigned char high;
     unsigned char low;
     unsigned char outside;
+    unsigned char enable;
 }ADCControl;
 
 #define  PARPORT_ACK PORTDbits.RD6
@@ -67,10 +68,16 @@ typedef struct{
 #define MSG_NOTHING 0x0F
 
 #define MSG_INTBETWEEN 0x5
-#define MSG_ACK_INTBETWEEN 0x7
+#define MSG_ACK_INTBETWEEN 0xB
 
-#define MSG_INTOUTSIDE 0x6
-#define MSG_ACK_INTOUTSIDE 0x8
+#define MSG_INTOUTSIDE 0x4
+#define MSG_ACK_INTOUTSIDE 0xA
+
+#define MSG_ENABLE 0x6
+#define MSG_ACK_ENABLE 0x9
+
+#define MSG_DISABLE 0x7
+#define MSG_ACK_DISABLE 0x8
 
 #define TRUE 1
 #define FALSE 0

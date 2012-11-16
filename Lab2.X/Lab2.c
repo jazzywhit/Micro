@@ -44,17 +44,18 @@ void main()
     //InitHD44780();  //Initialize the LCD Board
    // SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &mPORTDbits.RD6=0;onth, &year);// ****ONLY NEED TO DO THIS ONCE****
     //ReadTimeDS1307(&dateTime); //Send the date time construct.
-    PORTDbits.RD6=1; ///ack 
-    adcControl.high= 0;
+
+    adcControl.high = 0;
     adcControl.low = 0;
     adcControl.outside = 0;
+    adcControl.enable = 0;
 
     while(1)
     {
         
         ProcessADC(ReadADC(),adcControl); //Send the value to turn LED on/off
         ReadTimeDS1307(&dateTime); //Send the date time construct.
-        CheckParallel(&dateTime); //Check the Parallel Port for Communications.
+        CheckParallel(&dateTime , &adcControl); //Check the Parallel Port for Communications.
         continue;
     }
 }
