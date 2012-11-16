@@ -46,8 +46,8 @@ typedef union{
 } ByteParts;
 
 typedef struct{
-    unsigned char high;
-    unsigned char low;
+    unsigned short upperBound;
+    unsigned short lowerBound;
     unsigned char outside;
     unsigned char enable;
 }ADCControl;
@@ -55,7 +55,7 @@ typedef struct{
 #define  PARPORT_ACK PORTDbits.RD6
 #define BYTE unsigned char
 
-    //Parallel Port Commands
+//Parallel Port Commands and Responses    
 #define MSG_RESET 0x03
 #define MSG_ACK_RESET 0x0D
 
@@ -73,17 +73,14 @@ typedef struct{
 #define MSG_INTOUTSIDE 0x4
 #define MSG_ACK_INTOUTSIDE 0xA
 
-#define MSG_ENABLE 0x6
-#define MSG_ACK_ENABLE 0x9
+#define MSG_INTENABLE 0x6
+#define MSG_ACK_INTENABLE 0x9
 
-#define MSG_DISABLE 0x7
-#define MSG_ACK_DISABLE 0x8
+#define MSG_INTDISABLE 0x7
+#define MSG_ACK_INTDISABLE 0x8
 
 #define TRUE 1
 #define FALSE 0
-
-//Parallel Reply Messages
-#define MSG_ACK 0x0E
 
 #define SECONDS 's'
 #define MINUTES 'm'

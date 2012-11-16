@@ -374,6 +374,22 @@ static unsigned char readPPNibble(struct pp_adc *p){
  *              is called. No checking is performed. 
  */
 static void writePP3Nibble(struct pp_adc *p, int n){
+    
+    short twoBytes;
+    
+    // Lower nibble (0-3)
+    twoBytes = (n & 0x000F);
+    writePPNibble(p,(unsigned char)twoBytes);
+    
+    
+    // Upper Nibble (4-7)
+    twoBytes = (n & 0x00F0) >> 4;
+    writePPNibble(p,(unsigned char)twoBytes);
+    
+    
+    // Most significant 2 bits (8-9)
+    twoBytes = (n & 0x0300) >> 8;
+    writePPNibble(p,(unsigned char)twoBytes);
 
 }
 
@@ -449,12 +465,12 @@ static int cmd_eval(struct pp_adc *p, const char *cmdline){
  * Returns:    0 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_reset(struct pp_adc *p, int params[2]){
-	printk(KERN_INFO "----------------------------------------------------\nReset\n");
+	printk(KERN_INFO "----------------------------------------------------\nRESET\n");
 	unsigned char ackResult;
     
-  	//Write RESET Command to PIC.
+  	// Write RESET Command to PIC.
   	writePPNibble(p,MSG_RESET);
-	
+	// Read ACK
 	ackResult=readPPNibble(p);
     
 	if( ackResult != MSG_ACK_RESET ){
@@ -464,7 +480,13 @@ static int cmd_reset(struct pp_adc *p, int params[2]){
 		return -ENODEV;
     }
 	printk(KERN_INFO "\nACK RESULT : %X", ackResult);
+    
+     // Clear data bus
 	parport_write_data(p->pardev->port,0x0);
+    
+    // Reset IRQ counter
+    p->irq_counter = 0;
+    
 	printk(KERN_INFO "----------------------------------------------------\n");
 	return 0;
 }
@@ -483,7 +505,7 @@ static int cmd_ping(struct pp_adc *p, int params[2]){
     
   	//Write PING Command to PIC.
   	writePPNibble(p,MSG_PING);
-	
+    // Read ACK
 	ackResult=readPPNibble(p);
     
 	if( ackResult != MSG_ACK_PING ){
@@ -494,10 +516,9 @@ static int cmd_ping(struct pp_adc *p, int params[2]){
     }
 	printk(KERN_INFO "\nACK RESULT : %X", ackResult);
 	printk(KERN_INFO "\nStatus: Ping command Success");
+
+    // Clear data bus
 	parport_write_data(p->pardev->port,0x0);
-    
-    // Reset IRQ counter
-    p->irq_counter = 0;
     
 	printk(KERN_INFO "----------------------------------------------------\n");
 	return 0;
@@ -513,6 +534,28 @@ static int cmd_ping(struct pp_adc *p, int params[2]){
  * Returns:    0 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_enable(struct pp_adc *p, int params[2]){
+    
+	printk(KERN_INFO "----------------------------------------------------\nENABLE\n");
+	unsigned char ackResult;
+    
+  	//Write PING Command to PIC.
+  	writePPNibble(p,MSG_INTENABLE);
+    // Read ACK
+	ackResult=readPPNibble(p);
+    
+	if( ackResult != MSG_ACK_INTENABLE ){
+		parport_write_data(p->pardev->port,0x0);
+		printk(KERN_INFO "\nACK RESULT : %X", ackResult);
+        printk(KERN_INFO "\nStatus: Enable command failed");
+		return -ENODEV;
+    }
+	printk(KERN_INFO "\nACK RESULT : %X", ackResult);
+	printk(KERN_INFO "\nStatus: Enable command Success");
+    
+    // Clear data bus
+	parport_write_data(p->pardev->port,0x0);
+    
+	printk(KERN_INFO "----------------------------------------------------\n");
 	return 0;
 }
 
@@ -525,6 +568,28 @@ static int cmd_enable(struct pp_adc *p, int params[2]){
  * Returns:    0 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_disable(struct pp_adc *p, int params[2]){
+    
+	printk(KERN_INFO "----------------------------------------------------\nDISABLE\n");
+	unsigned char ackResult;
+    
+  	//Write PING Command to PIC.
+  	writePPNibble(p,MSG_INTDISABLE);
+    // Read ACK
+	ackResult=readPPNibble(p);
+    
+	if( ackResult != MSG_ACK_INTDISABLE ){
+		parport_write_data(p->pardev->port,0x0);
+		printk(KERN_INFO "\nACK RESULT : %X", ackResult);
+        printk(KERN_INFO "\nStatus: Disable command failed");
+		return -ENODEV;
+    }
+	printk(KERN_INFO "\nACK RESULT : %X", ackResult);
+	printk(KERN_INFO "\nStatus: Disable command Success");
+    
+    // Clear data bus
+	parport_write_data(p->pardev->port,0x0);
+    
+	printk(KERN_INFO "----------------------------------------------------\n");
 	return 0;
 }
 
@@ -538,7 +603,38 @@ static int cmd_disable(struct pp_adc *p, int params[2]){
  * Returns:    0 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_between(struct pp_adc *p, int params[2]){
+	
+    printk(KERN_INFO "----------------------------------------------------\nBETWEEN\n");
+	unsigned char ackResult;
+     
+  	// Write BETWEEN Command to PIC.
+  	writePPNibble(p,MSG_INTBETWEEN);
+    // Read ACK
+	ackResult=readPPNibble(p);
+    
+    // FAIL
+	if( ackResult != MSG_ACK_INTBETWEEN ){
+		parport_write_data(p->pardev->port,0x0);
+		printk(KERN_INFO "\nACK RESULT : %X", ackResult);
+        printk(KERN_INFO "\nStatus: Between command failed");
+		return -ENODEV;
+    }
+    
+    // SUCCESS
+	printk(KERN_INFO "\nACK RESULT : %X", ackResult);
+	printk(KERN_INFO "\nStatus: Between command Success");
+    
+    // Send 3 Nibbles  (Lower Bound)
+    writePP3Nibble(p,params[0]);
+    // Send 3 Nibbles  (Upper Bound)
+    writePP3Nibble(p,params[1]);
+
+    // Clear data bus
+	parport_write_data(p->pardev->port,0x0);
+    
+	printk(KERN_INFO "----------------------------------------------------\n");
 	return 0;
+
 }
 
 /* cmd_outside
@@ -551,8 +647,37 @@ static int cmd_between(struct pp_adc *p, int params[2]){
  * Returns:    0 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_outside(struct pp_adc *p, int params[2]){
-	return 0;
-}
+	
+    printk(KERN_INFO "----------------------------------------------------\nOUTSIDE\n");
+	unsigned char ackResult;
+    
+  	// Write OUTSIDE Command to PIC.
+  	writePPNibble(p,MSG_INTOUTSIDE);
+    // Read ACK
+	ackResult=readPPNibble(p);
+    
+    // FAIL
+	if( ackResult != MSG_ACK_INTOUTSIDE ){
+		parport_write_data(p->pardev->port,0x0);
+		printk(KERN_INFO "\nACK RESULT : %X", ackResult);
+        printk(KERN_INFO "\nStatus: Outside command failed");
+		return -ENODEV;
+    }
+    
+    // SUCCESS
+	printk(KERN_INFO "\nACK RESULT : %X", ackResult);
+	printk(KERN_INFO "\nStatus: Outside command Success");
+    
+    // Send 3 Nibbles  (Lower Bound)
+    writePP3Nibble(p,params[0]);
+    // Send 3 Nibbles  (Upper Bound)
+    writePP3Nibble(p,params[1]);
+    
+    // Clear data bus
+	parport_write_data(p->pardev->port,0x0);
+    
+	printk(KERN_INFO "----------------------------------------------------\n");
+	return 0;}
 
 //--------------------------------- Read Byte --------------------------------------------
 //Purpose: Read an entire byte by breaking it up into 4-bit parts.

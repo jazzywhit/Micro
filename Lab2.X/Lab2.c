@@ -45,8 +45,8 @@ void main()
    // SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &mPORTDbits.RD6=0;onth, &year);// ****ONLY NEED TO DO THIS ONCE****
     //ReadTimeDS1307(&dateTime); //Send the date time construct.
 
-    adcControl.high = 0;
-    adcControl.low = 0;
+    adcControl.upperBound = 0;
+    adcControl.lowerBound = 0;
     adcControl.outside = 0;
     adcControl.enable = 0;
 

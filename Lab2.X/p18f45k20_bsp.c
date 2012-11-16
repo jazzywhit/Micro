@@ -105,16 +105,21 @@ void ProcessADC(ADCData adcRead, ADCControl adcControl) {
 
     // Control interrupt
     if (adcControl.enable) {
+        
         // Outside
         if (adcControl.outside) {
-            if ((unsigned char) adcRead.allbits > adcControl.high || (unsigned char) adcRead.allbits < adcControl.low)
+            if ((unsigned short) adcRead.allbits > adcControl.upperBound ||
+                (unsigned short) adcRead.allbits < adcControl.lowerBound)
                 PARPORT_ACK = 1;
+           
             else PARPORT_ACK = 0;
 
         // Inside
         } else {
-            if ((unsigned char) adcRead.allbits < adcControl.high && (unsigned char) adcRead.allbits > adcControl.low)
+            if ((unsigned short) adcRead.allbits < adcControl.upperBound &&
+                (unsigned short) adcRead.allbits > adcControl.lowerBound)
                 PARPORT_ACK = 1;
+           
             else PARPORT_ACK = 0;
         }
     }

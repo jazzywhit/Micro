@@ -83,19 +83,40 @@ void CheckParallel(timeStr *dateTime, ADCControl *adcControl) {
     }
 }
 
+/*--------------------------- reaadADCBoundValue() ------------------------------------------------------
+ Purpose     : Reads 3 nibbles from the master device and reconstructs it into a 10 bit value
+ Parameters  : N/A
+ Output      : A 2 byte value of which only the first 10 bits are used as valid upper and lower bound values for 
+               comparisson with the 10 bit ADC result.
+ */
+unsigned short readADCBoundValue() {
+    
+    unsigned short data;
+    unsigned char nibble;
+    
+    // Lower nibble (0-3)
+    ReadData(&nibble);
+    data = (nibble & 0x000F);
+    
+    // Upper Nibble (4-7)
+    ReadData(&nibble);
+    data |= (nibble << 4) & 0x00F0;
+    
+     // Most significant 2 bits (8-9)
+    ReadData(&nibble);
+    data |= (nibble << 8) & 0x0300; // bit 8 and 9.
+    
+    return data;
+    
+}
+
 void SetInBetween(ADCControl *adcControl) {
 
-    unsigned char low;
-    unsigned char high;
-
-    // Sets for in between
+    // Sets Interrudpt for in between
     adcControl.outside = 0;
 
-    ReadData(&low);
-    ReadData(&high);
-
-    adcControl.low = low;
-    adcControl.high = high;
+    adcControl->lowerBound = readADCBoundValue();
+    adcControl->upperBound = readADCBoundValue();
 
 }
 
@@ -103,6 +124,9 @@ void SetOutside(ADCControl *adcControl) {
 
     // Sets for outside
     adcControl.outside = 1;
+    
+    adcControl->lowerBound = readADCBoundValue();
+    adcControl->upperBound = readADCBoundValue();
 }
 
 /*--------------------------- ResetConnection () ------------------------------------------------------
@@ -161,7 +185,6 @@ void WriteData(unsigned char data) {
     PortD0 = 0;
 
     WaitForStrobeHigh()
-            //        while (!STROBE) continue; //Remain here while the strobe remains high
 }
 
 /*--------------------------- HighNibble () ------------------------------------------------------
@@ -200,15 +223,11 @@ void GetCommand(timeStr dateTime) {
 void SendADC(void) {
 
     ADCData adcRead = ReadADC();
-    //    WriteData(1);
-    //    WriteData(2);
-    //    WriteData(3);
+
     WriteData(adcRead.write.hbits);
     WriteData(adcRead.write.mbits);
     WriteData(adcRead.write.lbits);
-    //    WriteData((adcRead & 0x0300) >> 8 );
-    //   WriteData((adcRead & 0x00F0) >> 4 );
-    //   WriteData(adcRead & 0x000F );
+
 }
 
 void WriteByte(BYTE byte) {
@@ -223,16 +242,8 @@ void WriteByte(BYTE byte) {
  Output      : N/A
  */
 void SendTime(timeStr dateTime) {
+ 
     /////////////////////////////16 RTC WRITES//////////////////////////////
-    //TRISD = 0b01101111;
-    //    WriteByte(19);
-    //    WriteByte(46);
-    //    WriteByte(20);
-    //    WriteByte(3);
-    //    WriteByte(30);
-    //    WriteByte(10);
-    //    WriteByte(12);
-    //    WriteByte(255);
     WriteByte(dateTime.seconds);
     WriteByte(dateTime.minutes);
     WriteByte(dateTime.hours);
