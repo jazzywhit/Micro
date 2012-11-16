@@ -85,7 +85,7 @@ static void           pp_adc_irq(void *handle);
 
 // Character device callbacks
 static int            hook_open(struct inode *inodep, struct file *filp);
-static ssize_t        hook_write(struct file *filep, const char __user *buffer, size_t size, loff_t *offset);
+static ssize_t        hook_write(struct file *flip, const char __user *buffer, size_t size, loff_t *offset);
 static ssize_t        hook_read(struct file *filp, char __user *buffer, size_t size, loff_t *offset);
 static int            hook_close(struct inode *inodep, struct file *filp);
 static unsigned int   hook_poll(struct file *filp, poll_table *wait);
@@ -451,18 +451,18 @@ static int cmd_eval(struct pp_adc *p, const char *cmdline){
 static int cmd_reset(struct pp_adc *p, int params[2]){
 	printk(KERN_INFO "----------------------------------------------------\nReset\n");
 	unsigned char ackResult;
-
+    
   	//Write RESET Command to PIC.
-  	writePPNibble(p,MSG_RESET); 
+  	writePPNibble(p,MSG_RESET);
 	
 	ackResult=readPPNibble(p);
-
+    
 	if( ackResult != MSG_ACK_RESET ){
 		parport_write_data(p->pardev->port,0x0);
 		printk(KERN_INFO "\nACK RESULT : %X", ackResult);
-    		printk(KERN_INFO "\nStatus: Reset command failed");
-		return -1;
-    	}
+        printk(KERN_INFO "\nStatus: Reset command failed");
+		return -ENODEV;
+    }
 	printk(KERN_INFO "\nACK RESULT : %X", ackResult);
 	parport_write_data(p->pardev->port,0x0);
 	printk(KERN_INFO "----------------------------------------------------\n");
@@ -480,21 +480,25 @@ static int cmd_reset(struct pp_adc *p, int params[2]){
 static int cmd_ping(struct pp_adc *p, int params[2]){
 	printk(KERN_INFO "----------------------------------------------------\nPING\n");
 	unsigned char ackResult;
-
+    
   	//Write PING Command to PIC.
-  	writePPNibble(p,MSG_PING); 
+  	writePPNibble(p,MSG_PING);
 	
 	ackResult=readPPNibble(p);
-
+    
 	if( ackResult != MSG_ACK_PING ){
 		parport_write_data(p->pardev->port,0x0);
 		printk(KERN_INFO "\nACK RESULT : %X", ackResult);
-    		printk(KERN_INFO "\nStatus: Ping command failed");
-		return -1;
-    	}
+        printk(KERN_INFO "\nStatus: Ping command failed");
+		return -ENODEV;
+    }
 	printk(KERN_INFO "\nACK RESULT : %X", ackResult);
 	printk(KERN_INFO "\nStatus: Ping command Success");
 	parport_write_data(p->pardev->port,0x0);
+    
+    // Reset IRQ counter
+    p->irq_counter = 0;
+    
 	printk(KERN_INFO "----------------------------------------------------\n");
 	return 0;
 
@@ -601,7 +605,6 @@ void DisplayData(unsigned char *RTCData, unsigned char *adcResult){
     
     printk(KERN_INFO "\nADC result: %u" , *adcResult) ;
     
-    //                                                   Hour         Minutes     Seconds          Month        date          year
     printk(KERN_INFO "\nTime: %02u:%02u:%02u %c %02u/%02u/20%02u" , RTCData[2], RTCData[1], RTCData[0], day, RTCData[5], RTCData[4], RTCData[6] );
 
 }
@@ -630,7 +633,7 @@ static int cmd_get(struct pp_adc *p, int params[2]){
     
     if(ackResult != MSG_ACK_GET) {
       printk(KERN_INFO "\nStatus: Get command failed");
-        return 0 ;
+        return -ENODEV ;
     }
     
     //Read 3 ADC Nibles and assemble them
