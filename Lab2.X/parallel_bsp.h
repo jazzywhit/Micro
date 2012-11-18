@@ -38,7 +38,7 @@ extern "C" {
     void ResetConnection(void);
     void SetInBetween( ADCControl *adcControl);
     void SetOutside( ADCControl *adcControl);
-    unsigned short readADCBoundValue();
+    unsigned short ReadADCBoundValue();
     
 #ifdef	__cplusplus
 }

@@ -29,7 +29,12 @@
 #pragma config WDTEN = OFF, LVP = OFF
 
 timeStr dateTime;
-ADCControl adcControl;
+ADCControl adcControl = {
+    .upperBound = 0,
+    .lowerBound = 0,
+    .outside = 0,
+    .enable = 0,
+};
 
 /*--------------------------- main() ------------------------------------------------------
  Purpose     : Main insertion into program.
@@ -45,10 +50,6 @@ void main()
    // SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &mPORTDbits.RD6=0;onth, &year);// ****ONLY NEED TO DO THIS ONCE****
     //ReadTimeDS1307(&dateTime); //Send the date time construct.
 
-    adcControl.upperBound = 0;
-    adcControl.lowerBound = 0;
-    adcControl.outside = 0;
-    adcControl.enable = 0;
 
     while(1)
     {

@@ -89,7 +89,7 @@ void CheckParallel(timeStr *dateTime, ADCControl *adcControl) {
  Output      : A 2 byte value of which only the first 10 bits are used as valid upper and lower bound values for 
                comparisson with the 10 bit ADC result.
  */
-unsigned short readADCBoundValue() {
+unsigned short ReadADCBoundValue() {
     
     unsigned short data;
     unsigned char nibble;
@@ -115,8 +115,8 @@ void SetInBetween(ADCControl *adcControl) {
     // Sets Interrudpt for in between
     adcControl.outside = 0;
 
-    adcControl->lowerBound = readADCBoundValue();
-    adcControl->upperBound = readADCBoundValue();
+    adcControl->lowerBound = ReadADCBoundValue();
+    adcControl->upperBound = ReadADCBoundValue();
 
 }
 
@@ -125,8 +125,8 @@ void SetOutside(ADCControl *adcControl) {
     // Sets for outside
     adcControl.outside = 1;
     
-    adcControl->lowerBound = readADCBoundValue();
-    adcControl->upperBound = readADCBoundValue();
+    adcControl->lowerBound = ReadADCBoundValue();
+    adcControl->upperBound = ReadADCBoundValue();
 }
 
 /*--------------------------- ResetConnection () ------------------------------------------------------
