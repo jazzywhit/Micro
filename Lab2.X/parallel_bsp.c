@@ -29,8 +29,6 @@
 #define PortD2 PORTDbits.RD2
 #define PortD3 PORTDbits.RD3
 #define STROBE PORTDbits.RD5
-//#define ACKPIN PORTCbits.RD7
-
 
 #define WaitForStrobeLow() while (STROBE) continue; //Wait for STROBE LOW
 #define WaitForStrobeHigh() while (!STROBE) continue; //Wait for STROBE HIGH
@@ -44,7 +42,7 @@ void CheckParallel(timeStr *dateTime, ADCControl *adcControl) {
     if (!STROBE) { // If STROBE is LOW
         unsigned char command = 0;
         ReadData(&command); //Read the command from the BUS
-        //WaitForStrobeLow() //Wait for STROBE LOW
+
         switch (command) {
             case MSG_PING:
                 WriteData(MSG_ACK_PING); //Send ack. (Only task)
@@ -55,7 +53,7 @@ void CheckParallel(timeStr *dateTime, ADCControl *adcControl) {
                 break;
             case MSG_GET:
                 WriteData(MSG_ACK_GET);
-                GetCommand(*dateTime); //Run the GET command
+                GetCommand(*dateTime, adcControl); //Run the GET command
                 break;
             case MSG_INTBETWEEN:
                 WriteData(MSG_ACK_INTBETWEEN);
@@ -65,21 +63,19 @@ void CheckParallel(timeStr *dateTime, ADCControl *adcControl) {
                 WriteData(MSG_ACK_INTOUTSIDE);
                 SetOutside(adcControl);
                 break;
-            case MSG_ENABLE:
-                WriteData(MSG_ACK_ENABLE);
-                adcControl.enable = 1;
+            case MSG_INTENABLE:
+                WriteData(MSG_ACK_INTENABLE);
+                SetEnable(adcControl);
                 break;
-            case MSG_DISABLE:
-                WriteData(MSG_ACK_DISABLE);
-                adcControl.enable = 0;
+            case MSG_INTDISABLE:
+                WriteData(MSG_ACK_INTDISABLE);
+                SetDisble(adcControl);
                 break;
             default:
                 WaitForStrobeHigh()
                 WaitForStrobeLow()
                 break;
         }
-
-        //ReadTimeDS1307(&dateTime); //Send the date time construct.
     }
 }
 
@@ -111,22 +107,44 @@ unsigned short ReadADCBoundValue() {
 }
 
 void SetInBetween(ADCControl *adcControl) {
+    // Sets for in between
+    unsigned char low;
+    unsigned char high;
 
-    // Sets Interrudpt for in between
-    adcControl.outside = 0;
+    adcControl->outside = 0;
 
-    adcControl->lowerBound = ReadADCBoundValue();
-    adcControl->upperBound = ReadADCBoundValue();
+    ReadData(&low);
+    ReadData(&high);
 
+    adcControl->low = low;
+    adcControl->high = high;
+}
+
+void SetDisble(ADCControl *adcControl) {
+
+    // Sets for outside
+    adcControl->enable = 0;
+}
+
+void SetEnable(ADCControl *adcControl) {
+
+    // Sets for outside
+    adcControl->enable = 1;
 }
 
 void SetOutside(ADCControl *adcControl) {
 
-    // Sets for outside
-    adcControl.outside = 1;
-    
-    adcControl->lowerBound = ReadADCBoundValue();
-    adcControl->upperBound = ReadADCBoundValue();
+    unsigned char low;
+    unsigned char high;
+
+    // Sets for in between
+    adcControl->outside = 1;
+
+    ReadData(&low);
+    ReadData(&high);
+
+    adcControl->low = low;
+    adcControl->high = high;
 }
 
 /*--------------------------- ResetConnection () ------------------------------------------------------
@@ -210,8 +228,8 @@ BYTE LowNibble(BYTE byte) {
  Parameters  : N/A
  Output      : N/A
  */
-void GetCommand(timeStr dateTime) {
-    SendADC(); //Start with the ADC first.
+void GetCommand(timeStr dateTime, ADCControl *adcControl) {
+    SendADC(adcControl); //Start with the ADC first.
     SendTime(dateTime); //Finish with the time.
 }
 
@@ -220,14 +238,10 @@ void GetCommand(timeStr dateTime) {
  Parameters  : N/A
  Output      : N/A
  */
-void SendADC(void) {
-
-    ADCData adcRead = ReadADC();
-
-    WriteData(adcRead.write.hbits);
-    WriteData(adcRead.write.mbits);
-    WriteData(adcRead.write.lbits);
-
+void SendADC(ADCControl *adcControl) {
+    WriteData(adcControl->adcData.write.hbits);
+    WriteData(adcControl->adcData.write.mbits);
+    WriteData(adcControl->adcData.write.lbits);
 }
 
 void WriteByte(BYTE byte) {
@@ -242,8 +256,6 @@ void WriteByte(BYTE byte) {
  Output      : N/A
  */
 void SendTime(timeStr dateTime) {
- 
-    /////////////////////////////16 RTC WRITES//////////////////////////////
     WriteByte(dateTime.seconds);
     WriteByte(dateTime.minutes);
     WriteByte(dateTime.hours);

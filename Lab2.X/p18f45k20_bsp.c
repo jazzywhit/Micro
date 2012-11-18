@@ -62,27 +62,17 @@ void InitI2C(void) {
  */
 ////////////////////////////////////////////////////////////////////////////////
 
-ADCData ReadADC() {
-    //unsigned char result = 0;
-    ADCData newRead;
+void ReadADC(ADCControl *adcControl) {
 
     ADCON0bits.GO_DONE = 1; //Start Conversion.
     while (ADCON0bits.GO_DONE) {
         continue; //While conversion is not completed. Loop.
     }
 
-    // ADRESH holds the MSbit's of the ADC conversion
-    //    result = ((ADRESH & 0x03) << 3); // Mask out everything but the bit 1 and 0.
-    //    result = result << 3 ;    // Shift MSBits to bit position 8 and 9
-    newRead.allbits = 0;
-    newRead.read.adresh = (ADRESH & 0x03); // << 3);
-    newRead.read.adresl = (ADRESL);
+    adcControl->adcData.allbits = 0;
+    adcControl->adcData.read.adresh = (ADRESH & 0x03); // << 3);
+    adcControl->adcData.read.adresl = (ADRESL);
 
-
-    // ADRESL holds the LSB of the ADC conversion
-    //    result |= ADRESL;
-
-    return newRead;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -95,32 +85,26 @@ ADCData ReadADC() {
  */
 ////////////////////////////////////////////////////////////////////////////////
 
-void ProcessADC(ADCData adcRead, ADCControl adcControl) {
+void ProcessADC(ADCControl *adcControl) {
 
     // Control LED
-    if (adcRead.allbits < ADC_COMPARE_VALUE) //If it is dark the voltage will be around (.3-.4)V
+    if (adcControl->adcData.allbits < ADC_COMPARE_VALUE) //If it is dark the voltage will be around (.3-.4)V
         PORTDbits.RD7 = 1; // LED Will turn Off/On depending on comparision.
     else
         PORTDbits.RD7 = 0;
 
     // Control interrupt
-    if (adcControl.enable) {
-        
-        // Outside
-        if (adcControl.outside) {
-            if ((unsigned short) adcRead.allbits > adcControl.upperBound ||
-                (unsigned short) adcRead.allbits < adcControl.lowerBound)
-                PARPORT_ACK = 1;
-           
-            else PARPORT_ACK = 0;
-
-        // Inside
-        } else {
-            if ((unsigned short) adcRead.allbits < adcControl.upperBound &&
-                (unsigned short) adcRead.allbits > adcControl.lowerBound)
-                PARPORT_ACK = 1;
-           
-            else PARPORT_ACK = 0;
+    if (adcControl->enable){
+        if (adcControl->outside){ // Outside
+            if (adcControl->adcData.allbits > adcControl->high || adcControl->adcData.allbits < adcControl->low)
+                INT_FLAG = 1;
+            else
+                INT_FLAG = 0;
+        } else { // In-Between
+            if (adcControl->adcData.allbits < adcControl->high && adcControl->adcData.allbits > adcControl->low)
+                INT_FLAG = 1;
+            else 
+                INT_FLAG = 0;
         }
     }
 

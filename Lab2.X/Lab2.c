@@ -29,12 +29,7 @@
 #pragma config WDTEN = OFF, LVP = OFF
 
 timeStr dateTime;
-ADCControl adcControl = {
-    .upperBound = 0,
-    .lowerBound = 0,
-    .outside = 0,
-    .enable = 0,
-};
+ADCControl adcControl;
 
 /*--------------------------- main() ------------------------------------------------------
  Purpose     : Main insertion into program.
@@ -50,13 +45,18 @@ void main()
    // SetupTimeDS1307(&seconds, &minutes, &hours, &day, &date, &mPORTDbits.RD6=0;onth, &year);// ****ONLY NEED TO DO THIS ONCE****
     //ReadTimeDS1307(&dateTime); //Send the date time construct.
 
+    adcControl.high = ADC_COMPARE_VALUE; //Default to the ADC Compare value
+    adcControl.low = 0;
+    adcControl.outside = 1; //Outside mode by default
+    adcControl.enable = 0; //Disbaled by default
+    adcControl->adcData.allbits = 0;
 
     while(1)
     {
-        
-        ProcessADC(ReadADC(),adcControl); //Send the value to turn LED on/off
+        ReadADC(&adcControl);
+        ProcessADC(&adcControl); //Send the value to turn LED on/off
         ReadTimeDS1307(&dateTime); //Send the date time construct.
-        CheckParallel(&dateTime , &adcControl); //Check the Parallel Port for Communications.
+        CheckParallel(&dateTime, &adcControl); //Check the Parallel Port for Communications.
         continue;
     }
 }
