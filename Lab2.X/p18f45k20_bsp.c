@@ -96,12 +96,12 @@ void ProcessADC(ADCControl *adcControl) {
     // Control interrupt
     if (adcControl->enable){
         if (adcControl->outside){ // Outside
-            if (adcControl->adcData.allbits > adcControl->high || adcControl->adcData.allbits < adcControl->low)
+            if (adcControl->adcData.allbits > adcControl->high.allbits || adcControl->adcData.allbits < adcControl->low.allbits)
                 INT_FLAG = 1;
             else
                 INT_FLAG = 0;
         } else { // In-Between
-            if (adcControl->adcData.allbits < adcControl->high && adcControl->adcData.allbits > adcControl->low)
+            if (adcControl->adcData.allbits < adcControl->high.allbits && adcControl->adcData.allbits > adcControl->low.allbits)
                 INT_FLAG = 1;
             else 
                 INT_FLAG = 0;

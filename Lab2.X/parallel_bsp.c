@@ -41,6 +41,7 @@ void CheckParallel(timeStr *dateTime, ADCControl *adcControl) {
 
     if (!STROBE) { // If STROBE is LOW
         unsigned char command = 0;
+
         ReadData(&command); //Read the command from the BUS
 
         switch (command) {
@@ -49,13 +50,13 @@ void CheckParallel(timeStr *dateTime, ADCControl *adcControl) {
                 break;
             case MSG_RESET:
                 WriteData(MSG_ACK_RESET); //Send ack.
-                //ResetConnection(); //Reset the connection.
+                ResetConnection(); //Reset the connection.
                 break;
             case MSG_GET:
                 WriteData(MSG_ACK_GET);
                 GetCommand(*dateTime, adcControl); //Run the GET command
                 break;
-            case MSG_INTBETWEEN:
+            case MSG_INTBETWEEN:               
                 WriteData(MSG_ACK_INTBETWEEN);
                 SetInBetween(adcControl);
                 break;
@@ -69,7 +70,7 @@ void CheckParallel(timeStr *dateTime, ADCControl *adcControl) {
                 break;
             case MSG_INTDISABLE:
                 WriteData(MSG_ACK_INTDISABLE);
-                SetDisble(adcControl);
+                SetDisable(adcControl);
                 break;
             default:
                 WaitForStrobeHigh()
@@ -85,66 +86,53 @@ void CheckParallel(timeStr *dateTime, ADCControl *adcControl) {
  Output      : A 2 byte value of which only the first 10 bits are used as valid upper and lower bound values for 
                comparisson with the 10 bit ADC result.
  */
-unsigned short ReadADCBoundValue() {
-    
-    unsigned short data;
-    unsigned char nibble;
-    
-    // Lower nibble (0-3)
+void ReadADCBoundValue(ADCData *adcData) {
+    unsigned char nibble=0;
+    adcData->allbits = 0;
+
+    while(STROBE) {continue;}
+        // Lower nibble (0-3)
+        ReadData(&nibble);
+    adcData->write.lbits = nibble;
+    WriteData(nibble);
+
+    while(STROBE) {continue;}
+        // Upper Nibble (4-7)
+         ReadData(&nibble);
+    adcData->write.mbits = nibble;
+    WriteData(nibble);
+
+    while(STROBE) {continue;}
+    // Most significant 2 bits (8-9)
     ReadData(&nibble);
-    data = (nibble & 0x000F);
-    
-    // Upper Nibble (4-7)
-    ReadData(&nibble);
-    data |= (nibble << 4) & 0x00F0;
-    
-     // Most significant 2 bits (8-9)
-    ReadData(&nibble);
-    data |= (nibble << 8) & 0x0300; // bit 8 and 9.
-    
-    return data;
-    
+    adcData->write.hbits = (nibble & 0x3); // bit 8 and 9.
+    WriteData(nibble);
 }
 
 void SetInBetween(ADCControl *adcControl) {
     // Sets for in between
-    unsigned char low;
-    unsigned char high;
+    ReadADCBoundValue(&adcControl->low);
+    ReadADCBoundValue(&adcControl->high);
 
     adcControl->outside = 0;
-
-    ReadData(&low);
-    ReadData(&high);
-
-    adcControl->low = low;
-    adcControl->high = high;
 }
 
-void SetDisble(ADCControl *adcControl) {
-
+void SetDisable(ADCControl *adcControl) {
     // Sets for outside
     adcControl->enable = 0;
 }
 
 void SetEnable(ADCControl *adcControl) {
-
     // Sets for outside
     adcControl->enable = 1;
 }
 
 void SetOutside(ADCControl *adcControl) {
-
-    unsigned char low;
-    unsigned char high;
-
     // Sets for in between
+    ReadADCBoundValue(&adcControl->low);
+    ReadADCBoundValue(&adcControl->high);
+    
     adcControl->outside = 1;
-
-    ReadData(&low);
-    ReadData(&high);
-
-    adcControl->low = low;
-    adcControl->high = high;
 }
 
 /*--------------------------- ResetConnection () ------------------------------------------------------
@@ -165,6 +153,7 @@ void ReadData(unsigned char *readResult) {
     WaitForStrobeHigh() //Wait for STROBE HIGH
 
     TRISD |= 0x0F; // Set the port as input
+    *readResult = 0;
 
     //Grab data
     *readResult |= (PortD3 << 3);
@@ -196,11 +185,6 @@ void WriteData(unsigned char data) {
 
     WaitForStrobeHigh() //Linux Reading
     WaitForStrobeLow() //Linux Done Reading
-
-    PortD3 = 0;
-    PortD2 = 0;
-    PortD1 = 0;
-    PortD0 = 0;
 
     WaitForStrobeHigh()
 }
@@ -248,6 +232,19 @@ void WriteByte(BYTE byte) {
 
     WriteData(HighNibble(byte));
     WriteData(LowNibble(byte));
+}
+
+unsigned char ReadByte() {
+    unsigned char result = 0;
+    unsigned char temp = 0;
+
+    ReadData(&temp); //High
+    result = temp << 4;
+
+    ReadData(&temp); //Low
+    result |= temp;
+
+    return result;
 }
 
 /*--------------------------- SendTime () ------------------------------------------------------

@@ -46,8 +46,8 @@ typedef union{
 } ByteParts;
 
 typedef struct{
-    unsigned short high;
-    unsigned short low;
+    ADCData high;
+    ADCData low;
     unsigned char outside;
     unsigned char enable;
     ADCData adcData;
@@ -57,7 +57,7 @@ typedef struct{
 #define BYTE unsigned char
 
 //Parallel Port Commands ----------------------------
-#define MSG_NOTHING 0x0F
+//#define MSG_NOTHING 0x07
 
 #define MSG_PING 0x01
 #define MSG_ACK_PING 0x0E
@@ -77,8 +77,8 @@ typedef struct{
 #define MSG_INTENABLE 0x6
 #define MSG_ACK_INTENABLE 0x9
 
-#define MSG_INTDISABLE 0x7
-#define MSG_ACK_INTDISABLE 0x8
+#define MSG_INTDISABLE 0x8
+#define MSG_ACK_INTDISABLE 0xF
 //--------------------------------------------------
 
 #define TRUE 1

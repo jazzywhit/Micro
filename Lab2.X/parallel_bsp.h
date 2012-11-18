@@ -38,8 +38,9 @@ void SendTime(timeStr dateTime); //Send the Time to Linux
 void ResetConnection(void);
 void SetInBetween( ADCControl *adcControl);
 void SetOutside( ADCControl *adcControl);
-void SetDisble(ADCControl *adcControl);
+void SetDisable(ADCControl *adcControl);
 void SetEnable(ADCControl *adcControl);
+unsigned char ReadByte();
 
 #ifdef	__cplusplus
 }
