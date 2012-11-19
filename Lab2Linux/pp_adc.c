@@ -610,6 +610,7 @@ static int cmd_disable(struct pp_adc *p, int params[2]){
  */
 static int cmd_between(struct pp_adc *p, int params[2]){
 	printk(KERN_INFO "----------------------------------------------------\nInterrupt Disable\n");
+
 	unsigned char ackResult;
 
   	//Write INTDISABLE Command to PIC.
@@ -643,7 +644,7 @@ static int cmd_between(struct pp_adc *p, int params[2]){
  * Returns:    0 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_outside(struct pp_adc *p, int params[2]){
-	printk(KERN_INFO "----------------------------------------------------\nInterrupt Disable\n");
+	printk(KERN_INFO "----------------------------------------------------\nInterrupt Outside\n");
 	unsigned char ackResult;
 
   	//Write INTDISABLE Command to PIC.

@@ -24,18 +24,23 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
+    
 #include "Globals.h"
 
 //Functions
-void CheckParallel(timeStr *dateTime);
+void CheckParallel(timeStr *dateTime, ADCControl *adcControl);
 void ReadData(unsigned char *readResult);
 void WriteData(unsigned char data); //Write 4 bit data on the bus
 void WriteByte(BYTE byte);
-void GetCommand(timeStr dateTime);
-void SendADC(void);
+void GetCommand(timeStr dateTime, ADCControl *adcControl);
+void SendADC(ADCControl *adcControl);
 void SendTime(timeStr dateTime); //Send the Time to Linux
 void ResetConnection(void);
+void SetInBetween( ADCControl *adcControl);
+void SetOutside( ADCControl *adcControl);
+void SetDisable(ADCControl *adcControl);
+void SetEnable(ADCControl *adcControl);
+unsigned char ReadByte();
 
 #ifdef	__cplusplus
 }

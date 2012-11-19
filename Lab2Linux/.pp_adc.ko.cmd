@@ -1,0 +1,1 @@
+cmd_/home/shouldabeengangstas/github/Micro/Lab2Linux/pp_adc.ko := ld -r -m elf_i386 -T /usr/src/linux-headers-2.6.35-22-generic/scripts/module-common.lds --build-id -o /home/shouldabeengangstas/github/Micro/Lab2Linux/pp_adc.ko /home/shouldabeengangstas/github/Micro/Lab2Linux/pp_adc.o /home/shouldabeengangstas/github/Micro/Lab2Linux/pp_adc.mod.o

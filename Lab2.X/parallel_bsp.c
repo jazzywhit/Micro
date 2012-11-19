@@ -15,7 +15,7 @@
     License: GNU GPLv3.
 
     Date Created: 10-20-2012
-*/
+ */
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "parallel_bsp.h"
@@ -29,8 +29,6 @@
 #define PortD2 PORTDbits.RD2
 #define PortD3 PORTDbits.RD3
 #define STROBE PORTDbits.RD5
-//#define ACKPIN PORTCbits.RD7
-
 
 #define WaitForStrobeLow() while (STROBE) continue; //Wait for STROBE LOW
 #define WaitForStrobeHigh() while (!STROBE) continue; //Wait for STROBE HIGH
@@ -38,40 +36,111 @@
 //--------------------------- CheckParallel () ----------------------------------------
 //Purpose: Read 4 bits from the bus to conclude which command is being used.
 //When Strobe is low
-void CheckParallel(timeStr *dateTime) {
 
-    if (!STROBE){ // If STROBE is LOW
+void CheckParallel(timeStr *dateTime, ADCControl *adcControl) {
+
+    if (!STROBE) { // If STROBE is LOW
         unsigned char command = 0;
+
         ReadData(&command); //Read the command from the BUS
-        //WaitForStrobeLow() //Wait for STROBE LOW
+
         switch (command) {
             case MSG_PING:
                 WriteData(MSG_ACK_PING); //Send ack. (Only task)
                 break;
             case MSG_RESET:
                 WriteData(MSG_ACK_RESET); //Send ack.
-                //ResetConnection(); //Reset the connection.
+                ResetConnection(); //Reset the connection.
                 break;
             case MSG_GET:
                 WriteData(MSG_ACK_GET);
-                GetCommand(*dateTime); //Run the GET command
+                GetCommand(*dateTime, adcControl); //Run the GET command
+                break;
+            case MSG_INTBETWEEN:               
+                WriteData(MSG_ACK_INTBETWEEN);
+                SetInBetween(adcControl);
+                break;
+            case MSG_INTOUTSIDE:
+                WriteData(MSG_ACK_INTOUTSIDE);
+                SetOutside(adcControl);
+                break;
+            case MSG_INTENABLE:
+                WriteData(MSG_ACK_INTENABLE);
+                SetEnable(adcControl);
+                break;
+            case MSG_INTDISABLE:
+                WriteData(MSG_ACK_INTDISABLE);
+                SetDisable(adcControl);
                 break;
             default:
-                WaitForStrobeHigh() 
+                WaitForStrobeHigh()
                 WaitForStrobeLow()
                 break;
         }
-        
-        //ReadTimeDS1307(&dateTime); //Send the date time construct.
     }
+}
+
+/*--------------------------- reaadADCBoundValue() ------------------------------------------------------
+ Purpose     : Reads 3 nibbles from the master device and reconstructs it into a 10 bit value
+ Parameters  : N/A
+ Output      : A 2 byte value of which only the first 10 bits are used as valid upper and lower bound values for 
+               comparisson with the 10 bit ADC result.
+ */
+void ReadADCBoundValue(ADCData *adcData) {
+    unsigned char nibble=0;
+    adcData->allbits = 0;
+
+    while(STROBE) {continue;}
+        // Lower nibble (0-3)
+        ReadData(&nibble);
+    adcData->write.lbits = nibble;
+    WriteData(nibble);
+
+    while(STROBE) {continue;}
+        // Upper Nibble (4-7)
+    ReadData(&nibble);
+    adcData->write.mbits = nibble;
+    WriteData(nibble);
+
+    while(STROBE) {continue;}
+    // Most significant 2 bits (8-9)
+    ReadData(&nibble);
+    adcData->write.hbits = (nibble & 0x3); // bit 8 and 9.
+    WriteData(nibble);
+}
+
+void SetInBetween(ADCControl *adcControl) {
+    // Sets for in between
+    ReadADCBoundValue(&adcControl->low);
+    ReadADCBoundValue(&adcControl->high);
+
+    adcControl->outside = 0;
+}
+
+void SetDisable(ADCControl *adcControl) {
+    // Sets for outside
+    adcControl->enable = 0;
+}
+
+void SetEnable(ADCControl *adcControl) {
+    // Sets for outside
+    adcControl->enable = 1;
+}
+
+void SetOutside(ADCControl *adcControl) {
+    // Sets for in between
+    ReadADCBoundValue(&adcControl->low);
+    ReadADCBoundValue(&adcControl->high);
+    
+    adcControl->outside = 1;
 }
 
 /*--------------------------- ResetConnection () ------------------------------------------------------
  Purpose     : Reset the connection and all necessary variables.
  Parameters  : N/A
  Output      : N/A
-*/
-void ResetConnection(void){
+ */
+void ResetConnection(void) {
     ///ADRESH = 0;
 }
 
@@ -79,11 +148,12 @@ void ResetConnection(void){
  Purpose     : Read data from the parallel port.
  Parameters  : N/A
  Output      : N/A
-*/
-void ReadData(unsigned char *readResult){
+ */
+void ReadData(unsigned char *readResult) {
     WaitForStrobeHigh() //Wait for STROBE HIGH
 
     TRISD |= 0x0F; // Set the port as input
+    *readResult = 0;
 
     //Grab data
     *readResult |= (PortD3 << 3);
@@ -102,7 +172,7 @@ void ReadData(unsigned char *readResult){
  Purpose     : Write data to the parallel port.
  Parameters  : N/A
  Output      : N/A
-*/
+ */
 void WriteData(unsigned char data) {
     WaitForStrobeLow() //Wait for STROBE LOW
 
@@ -116,20 +186,14 @@ void WriteData(unsigned char data) {
     WaitForStrobeHigh() //Linux Reading
     WaitForStrobeLow() //Linux Done Reading
 
-    PortD3 = 0;
-    PortD2 = 0;
-    PortD1 = 0;
-    PortD0 = 0;
-    
     WaitForStrobeHigh()
-//        while (!STROBE) continue; //Remain here while the strobe remains high
 }
 
 /*--------------------------- HighNibble () ------------------------------------------------------
  Purpose     : Make a high nibble
  Parameters  : N/A
  Output      : N/A
-*/
+ */
 BYTE HighNibble(BYTE byte) {
     return (byte >> 4) & 0x0F;
 }
@@ -138,7 +202,7 @@ BYTE HighNibble(BYTE byte) {
  Purpose     : Make a low nibble
  Parameters  : N/A
  Output      : N/A
-*/
+ */
 BYTE LowNibble(BYTE byte) {
     return byte & 0x0F;
 }
@@ -147,9 +211,9 @@ BYTE LowNibble(BYTE byte) {
  Purpose     : Send the ADC and then send the Time
  Parameters  : N/A
  Output      : N/A
-*/
-void GetCommand(timeStr dateTime){
-    SendADC(); //Start with the ADC first.
+ */
+void GetCommand(timeStr dateTime, ADCControl *adcControl) {
+    SendADC(adcControl); //Start with the ADC first.
     SendTime(dateTime); //Finish with the time.
 }
 
@@ -157,42 +221,38 @@ void GetCommand(timeStr dateTime){
  Purpose     : Write data to the parallel port.
  Parameters  : N/A
  Output      : N/A
-*/
-void SendADC(void){
-    
-    ADCData adcRead = ReadADC();
-    WriteData(1);
-    WriteData(2);
-    WriteData(3);
-//    WriteData(adcRead.write.hbits);
-//    WriteData(adcRead.write.mbits);
-//    WriteData(adcRead.write.lbits);
-//    WriteData((adcRead & 0x0300) >> 8 );
-//    WriteData((adcRead & 0x00F0) >> 4 );
-//    WriteData(adcRead & 0x000F );
+ */
+void SendADC(ADCControl *adcControl) {
+    WriteData(adcControl->adcData.write.hbits);
+    WriteData(adcControl->adcData.write.mbits);
+    WriteData(adcControl->adcData.write.lbits);
 }
 
-void WriteByte(BYTE byte){
+void WriteByte(BYTE byte) {
 
     WriteData(HighNibble(byte));
     WriteData(LowNibble(byte));
 }
+
+unsigned char ReadByte() {
+    unsigned char result = 0;
+    unsigned char temp = 0;
+
+    ReadData(&temp); //High
+    result = temp << 4;
+
+    ReadData(&temp); //Low
+    result |= temp;
+
+    return result;
+}
+
 /*--------------------------- SendTime () ------------------------------------------------------
  Purpose     : Send the time data over the parallel port.
  Parameters  : N/A
  Output      : N/A
-*/
-void SendTime(timeStr dateTime) { 
-    /////////////////////////////16 RTC WRITES//////////////////////////////
-    //TRISD = 0b01101111;
-//    WriteByte(19);
-//    WriteByte(46);
-//    WriteByte(20);
-//    WriteByte(3);
-//    WriteByte(30);
-//    WriteByte(10);
-//    WriteByte(12);
-//    WriteByte(255);
+ */
+void SendTime(timeStr dateTime) {
     WriteByte(dateTime.seconds);
     WriteByte(dateTime.minutes);
     WriteByte(dateTime.hours);

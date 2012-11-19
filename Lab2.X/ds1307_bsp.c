@@ -178,41 +178,41 @@ void ReadTimeDS1307(timeStr *dateTime) {
     
     if (SSPCON2bits.ACKSTAT){
         SetupTimeDS1307Fail();
-        return 0;
+    } else {
+
+        //Read seconds
+        Read(&dateTime->seconds, SECONDS);
+        AckI2C(); //Send Ack
+        while (SSPCON2bits.ACKEN)                   continue;
+        Read(&dateTime->minutes, MINUTES);
+        AckI2C(); //Send Ack
+        while (SSPCON2bits.ACKEN)                   continue;
+        Read(&dateTime->hours, HOURS);
+        AckI2C(); //Send Ack
+        while (SSPCON2bits.ACKEN)                   continue;
+        Read(&dateTime->day, DAY);
+        AckI2C(); //Send Ack
+        while (SSPCON2bits.ACKEN)                   continue;
+        Read(&dateTime->date, DATE);
+        AckI2C(); //Send Ack
+        while (SSPCON2bits.ACKEN)                   continue;
+        Read(&dateTime->month, MONTH);
+        AckI2C(); //Send Ack
+        while (SSPCON2bits.ACKEN)                   continue;
+        Read(&dateTime->year, YEAR);
+        NotAckI2C(); //Send Ack
+        while (SSPCON2bits.ACKEN)                   continue;
+        Read(&dateTime->control, CONTROL);
+        NotAckI2C(); //Send Ack
+        while (SSPCON2bits.ACKEN)                   continue;
+
+        //Send Stop
+        IdleI2C();
+        StopI2C();
+
+        //Bit indicating Stop is still in progress
+        while (SSPCON2bits.PEN)                         continue;
     }
-    
-    //Read seconds
-    Read(&dateTime->seconds, SECONDS);
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)                   continue;
-    Read(&dateTime->minutes, MINUTES);
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)                   continue;
-    Read(&dateTime->hours, HOURS);
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)                   continue;
-    Read(&dateTime->day, DAY);
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)                   continue;
-    Read(&dateTime->date, DATE);
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)                   continue;
-    Read(&dateTime->month, MONTH);
-    AckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)                   continue;
-    Read(&dateTime->year, YEAR);
-    NotAckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)                   continue;
-    Read(&dateTime->control, CONTROL);
-    NotAckI2C(); //Send Ack
-    while (SSPCON2bits.ACKEN)                   continue;
-    
-    //Send Stop
-    IdleI2C();
-    StopI2C();
-    
-    //Bit indicating Stop is still in progress
-    while (SSPCON2bits.PEN)                         continue;
 }
 
 
