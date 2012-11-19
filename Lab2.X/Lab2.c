@@ -47,7 +47,7 @@ void main()
 
     adcControl.high.allbits = ADC_COMPARE_VALUE; //Default to the ADC Compare value
     adcControl.low.allbits = 0;
-    adcControl.outside = 1; //Outside mode by default
+    adcControl.outside = 0; //Between mode by default
     adcControl.enable = 0; //Disbaled by default
     adcControl.adcData.allbits = 0;
 
@@ -55,7 +55,7 @@ void main()
     {
         ReadADC(&adcControl);
         ProcessADC(&adcControl); //Send the value to turn LED on/off
-        ReadTimeDS1307(&dateTime); //Send the date time construct.
+        //ReadTimeDS1307(&dateTime); //Send the date time construct.
         CheckParallel(&dateTime, &adcControl); //Check the Parallel Port for Communications.
         continue;
     }

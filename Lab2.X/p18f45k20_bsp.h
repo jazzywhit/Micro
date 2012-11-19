@@ -35,7 +35,7 @@ extern "C" {
 #define DS1307
 #define PPBit0 RA2  // PP Nibble bits
 #define PPTRIS TRISA2=TRISC2=TRISC1=TRISC0 // PP Nibble tristate; allows setting all PP nibble bits as input or output simultaneously
-#define ADC_COMPARE_VALUE 0x160
+#define ADC_COMPARE_VALUE 0x180
 
 ////////////////////////////////////////////////////////////////////////////////
 //FUNCTION DECLARATIONS

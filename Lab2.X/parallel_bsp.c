@@ -98,7 +98,7 @@ void ReadADCBoundValue(ADCData *adcData) {
 
     while(STROBE) {continue;}
         // Upper Nibble (4-7)
-         ReadData(&nibble);
+    ReadData(&nibble);
     adcData->write.mbits = nibble;
     WriteData(nibble);
 

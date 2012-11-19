@@ -87,24 +87,34 @@ void ReadADC(ADCControl *adcControl) {
 
 void ProcessADC(ADCControl *adcControl) {
 
-    // Control LED
-    if (adcControl->adcData.allbits < ADC_COMPARE_VALUE) //If it is dark the voltage will be around (.3-.4)V
-        PORTDbits.RD7 = 1; // LED Will turn Off/On depending on comparision.
-    else
-        PORTDbits.RD7 = 0;
-
-    // Control interrupt
     if (adcControl->enable){
         if (adcControl->outside){ // Outside
-            if (adcControl->adcData.allbits > adcControl->high.allbits || adcControl->adcData.allbits < adcControl->low.allbits)
-                INT_FLAG = 1;
-            else
-                INT_FLAG = 0;
+            if (adcControl->adcData.allbits > adcControl->high.allbits || adcControl->adcData.allbits < adcControl->low.allbits){
+                PORTDbits.RD6 = 1;
+            } else {
+                PORTDbits.RD6 = 0;
+            }
         } else { // In-Between
-            if (adcControl->adcData.allbits < adcControl->high.allbits && adcControl->adcData.allbits > adcControl->low.allbits)
-                INT_FLAG = 1;
-            else 
-                INT_FLAG = 0;
+            if (adcControl->adcData.allbits < adcControl->high.allbits && adcControl->adcData.allbits > adcControl->low.allbits){
+                PORTDbits.RD6 = 1;
+            } else  {
+                PORTDbits.RD6 = 0;
+            }
+        }
+    }
+    
+    // Control interrupt
+    if (adcControl->outside){ // Outside
+        if (adcControl->adcData.allbits > adcControl->high.allbits || adcControl->adcData.allbits < adcControl->low.allbits){
+            PORTDbits.RD7 = 1;
+        } else {
+            PORTDbits.RD7 = 0;
+        }
+    } else { // In-Between
+        if (adcControl->adcData.allbits < adcControl->high.allbits && adcControl->adcData.allbits > adcControl->low.allbits){
+            PORTDbits.RD7 = 1;
+        } else  {
+            PORTDbits.RD7 = 0;
         }
     }
 
@@ -149,6 +159,6 @@ void InitPorts(void) {
     TRISC = 0b11111111; //turn on tri-state register. The pins should be set to input for the I2C bus.
 
     //Setup PortD to attach to the LED
-    TRISD = 0b00101111; // PORTD bit 7 to output (0); bits 6:0 are inputs (1) (a.k.a. RD7 or pin 30)
+    TRISD = 0b00101111; // PORTD bit 7 to output (0); bits 5:0 are inputs (1) (a.k.a. RD7 or pin 30)
 
 }
