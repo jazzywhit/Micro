@@ -506,6 +506,9 @@ static int cmd_reset(struct pp_adc *p, int params[2]){
 	printk(KERN_INFO "\nStatus: Reset command success");
 	parport_write_data(p->pardev->port,0x0);
 	printk(KERN_INFO "----------------------------------------------------\n");
+
+	p->irq_counter = 0;
+
 	return 0;
 }
 
@@ -773,6 +776,9 @@ static int cmd_get(struct pp_adc *p, int params[2]){
       // Display Data
     DisplayData(RTCData, &adcResult);
     
+    //Reset the IRQ Counter
+    p->irq_counter = 0;
+
     return 1;
 }
 
