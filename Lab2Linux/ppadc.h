@@ -12,23 +12,27 @@
 //Delay
 #define WAIT_TIME 10
 
-// ADC Device Instructions
-#define MSG_RESET      0x3 // Changed from 0x0 to conform to Pic code
 #define MSG_PING       0x1
-#define MSG_GET        0x2
-#define MSG_INTBETWEEN 0x8 // Changed from 0x3 to conform to Pic code
-#define MSG_INTOUTSIDE 0x4
-#define MSG_INTENABLE  0x5
-#define MSG_INTDISABLE 0x6
-
-//ACKS
 #define MSG_ACK_PING 0xE
-#define MSG_ACK_RESET 0xD
 
-// ADC Device Responses
-//#define MSG_ACK        0xE
-#define MSG_ACK_GET    0xC           // Get Acknowledgment Command. 
-#define MSG_NOTHING    0xF
+#define MSG_GET        0x2
+#define MSG_ACK_GET    0xD 
+
+#define MSG_RESET      0x3 
+#define MSG_ACK_RESET 0xC
+
+#define MSG_INTBETWEEN 0x4
+#define MSG_ACK_INTBETWEEN 0xB
+
+#define MSG_INTOUTSIDE 0x5
+#define MSG_ACK_INTOUTSIDE 0xA
+
+#define MSG_INTENABLE  0x6
+#define MSG_ACK_INTENABLE 0x9
+
+#define MSG_INTDISABLE 0x8
+#define MSG_ACK_INTDISABLE 0xF
+
 
 // Host Driver Commands
 #define CMD_GET        "get"

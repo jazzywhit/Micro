@@ -14,3 +14,5 @@ make
 #install
 insmod pp_adc.ko
 mknod -m 666 /dev/pp0adc c 250 0
+
+cd scripts
