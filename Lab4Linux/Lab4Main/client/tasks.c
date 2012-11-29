@@ -283,12 +283,33 @@ void *sensor(void *ptr)
 */
 }
 
-/*
-communicate()
-This is the function that will be executed by the communication threat 
-*/
+/*--------------------communicate()-------------------
+Performs the communication with the server
+------------------------------------------------------*/
 void *communicate(void *ptr)
 {
+    
+    const char* hostname="localhost";
+	const int   port=8000;
+	const int   id=1;
+	const char* password="password";
+	const char* name="ShouldaBeenGangstas";
+	const int   adcval=123;
+	const char* status="Status:Running";
+    
+	char buf[1024];
+    
+	snprintf(buf, 1024, "http://%s:%d/update?id=%d&password=%s&name=%s&data=%d&status=%s",
+             hostname,
+             port,
+             id,
+             password,
+             name,
+             adcval,
+             status);
+    
+	HTTP_GET(buf);
+    
 /*	
 const char* hostname="cans.uml.edu";
 	const int   port=8080;
@@ -326,23 +347,20 @@ const char* hostname="cans.uml.edu";
 */
 }
 
-/*
-HTTP_GET()
+/*-------------------------HTTP_GET()----------------------
 Sends a command to the web server using curl libraries.
-Unchanged from the skeleton code.
-*/
-void HTTP_GET(const char *url){
+----------------------------------------------------------*/
+void HTTP_GET(const char* url){
 	CURL *curl;
 	curl = curl_easy_init();
 	if(curl) {
-		//curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dummy); //Not in skeleton code
-
 		curl_easy_setopt(curl, CURLOPT_URL, url);
 		curl_easy_perform(curl);
 		curl_easy_cleanup(curl);
 	}
-	
 }
+
+
 /*
 size_t dummy(void *nothing1, size_t nothing2, size_t nothing3, void *nothing4)
 {
