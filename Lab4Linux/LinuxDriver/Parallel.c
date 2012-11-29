@@ -36,17 +36,20 @@ Group Members:
 #define ppControl pport + 2       //Control Register Address of Parallel Port.
 #define numPorts 3                //Number of addresses associated with the Parallel Port.
 
+//Bus Clear Setup
+#define MSG_CLEAR 0x0
+
 //Ping Command Setup
 #define MSG_PING 0x1              // Ping Command.
-#define MSG_ACK_PING 0x4          // PING Acknowledgment Command. 
+#define MSG_ACK_PING 0xE          // PING Acknowledgment Command. 
 
 //Get Command Setup
 #define MSG_GET 0x2               // Get Command.
-#define MSG_ACK_GET 0x5           // Get Acknowledgment Command. 
+#define MSG_ACK_GET 0xC           // Get Acknowledgment Command. 
 
 //Reset Command Setup
 #define MSG_RESET 0x3             //Reset command.
-#define MSG_ACK_RESET 0x6         // Reset Acknowledgment Command. 
+#define MSG_ACK_RESET 0xD         // Reset Acknowledgment Command. 
 
 //Nothing Command Setup
 #define MSG_NOTHING 0xF           // No Operation Command.
@@ -62,9 +65,13 @@ BYTE ReadByte();
 int Reset();
 int Get();
 int Ping();
-void DisplayData(BYTE RTCData[], int adcResult ); 
+void DisplayData(); 
 void ClearTerminal();
 
+
+
+BYTE RTCData[8]; // Decide whether we want to use a struct or Array for this
+unsigned short adcResult = 0;
 
 //---------------------------- main ------------------------------------------------
 //Purpose: Initial insertion into the program.
@@ -72,31 +79,35 @@ void ClearTerminal();
 int main(int argc, char *argv[]){
   
   //Local variables.
-  int cmd;                                                                              //Command read from the command line.
-  int ignored;                                                                          //Ignored character buffer for the command line.
-  int commandsuccess;                                                                   //Variable for checking Success of a command.
+  int cmd; //Command read from the command line.
+  int ignored; //Ignored character buffer for the command line.
+  int commandsuccess; //Variable for checking Success of a command.
 
   //Open Parallel port.
   ClearTerminal();  
   printf("\n\nStatus: Opening port 0x378\n\n");
-  commandsuccess = ioperm(0x378, numPorts, 1);                                          //Set up parallel port permissions. 
+  commandsuccess = ioperm(0x378, numPorts, 1); //Set up parallel port permissions. 
 
   //Check status of opening parallel port.
   ClearTerminal();
   if(!commandsuccess){
+
     printf("\nStatus: Port %x Opened\n\n",pport);
     sleep(3);
+
   } 
   else {
+
     printf("\n\nStatus: Port %x could not be opened. Ensure root access.\n\n", pport);
     sleep(3);
     ClearTerminal();
     return(-1);
+
   }
 
   //Set initial state of STROBE and Data Bus
-  outb(0x01,ppControl); //Strobe low. 
-  outb(0x00,ppData);	//Initial value on data bus of 0
+  outb(0x00,ppControl); // STROBE HIGH / OUTPUT
+  outb(MSG_CLEAR,ppData); //Initial value on data bus of 0
   
   while(TRUE){
 
@@ -163,73 +174,77 @@ int OpenPort(int portAdr){
   return TRUE;
 }
 
+//------------------------------- ParPortRead -------------------------------------------
+//Purpose: Execute a 4-bit read of the Parallel Port.
+
+BYTE ParPortRead(){
+    
+    BYTE byte;
+    usleep(WAIT_TIME); //PIC will see low and output to the BUS
+
+    outb(0x21, ppControl); //STROBE LOW / INPUT
+    
+    usleep(WAIT_TIME); //PIC will see low and output to the BUS
+
+    outb(0x20, ppControl); //STROBE HIGH / INPUT
+    
+    //Read the data on the bus.
+    byte = inb(ppData);   
+    
+    //printf("\nParallel Port Read: %X",byte & 0x0F);
+    
+    //Extract lower bits of read variable.
+    byte &= 0x0F;
+    
+    usleep(WAIT_TIME); //PIC will see low and output to the BUS
+
+    outb(0x01, ppControl); //STROBE LOW / OUTPUT
+
+    usleep(WAIT_TIME); //PIC will see low and output to the BUS
+
+    //outb(MSG_CLEAR,ppData); //Clear the Data Bus
+    outb(0x00, ppControl); //STROBE HIGH / OUTPUT
+    
+    return byte;
+}
 
 //------------------------------- ParPortWrite -----------------------------------------
 //Purpose: Execute a 4-bit write on the Parallel Port.
 
 void ParPortWrite(BYTE byte){
 
+  usleep(WAIT_TIME); //PIC will see low and output to the BUS
+  outb(0x01, ppControl); //STROBE LOW / OUTPUT
+  
   //Output command to data bus.
-  outb(byte, ppData);                                      
-  printf("\nParallel Port Wrote: %x",byte & 0x0F);
-  usleep(WAIT_TIME);
-
-  // Set the strobe to high.
-  outb(0x00, ppControl);                                  
-  usleep(WAIT_TIME);
+  usleep(WAIT_TIME); //PIC will see low and output to the BUS
+  outb(byte, ppData);
+  //printf("\nParallel Port Wrote: %X",byte & 0x0F);
   
-  // Set the strobe to low.
-  outb(0x01, ppControl); 
-  usleep(WAIT_TIME);
-
-} 
-
-
-//------------------------------- ParPortRead -------------------------------------------
-//Purpose: Execute a 4-bit read of the Parallel Port.
-
-BYTE ParPortRead(){
-
-  //Local varaibles.
-  BYTE byte;
-
-  //Set strobe high.
-  outb(0x20, ppControl); 
-  usleep(WAIT_TIME);
-
-  //Read the data on the bus.
-  byte = inb(ppData);    
-  printf("\nParallel Port Read: %x",byte & 0x0F);
-  usleep(WAIT_TIME);
+  usleep(WAIT_TIME); //PIC will see low and output to the BUS
+  outb(0x00, ppControl); //STROBE HIGH / OUTPUT
   
-  //Set strobe low.
-  outb(0x21, ppControl);  
-  usleep(WAIT_TIME);
+  usleep(WAIT_TIME); // Wait for PIC to read data on BUS.  
+  
+  outb(0x01, ppControl); //STROBE LOW / OUTPUT
 
-  //Extract lower bits of read variable.
-  byte &= 0x0F;
+  usleep(WAIT_TIME); //PIC will see low and output to the BUS
 
-  //Put stobe and data back to low and low impedance mode
-  outb(0x01, ppControl);  
-
-  //Return byte read.
-  return byte;
+  outb(0x00, ppControl); //STROBE HIGH / OUTPUT
+    
 }
-
 
 //--------------------------------- Read Byte --------------------------------------------
 //Purpose: Read an entire byte by breaking it up into 4-bit parts.
 
 BYTE ReadByte(){
-  
-  BYTE temp;
+ 
   BYTE byte;
   
   //Reconstruct the two 4bit messages into a byte
-  temp = ParPortRead();
-  byte = temp<<4 & 0xF0; 
-  temp = ParPortRead();
-  byte |= temp;
+  byte = (ParPortRead()<<4) & 0xF0;
+
+  byte |= ParPortRead();
   
   return byte;  
 }
@@ -242,16 +257,19 @@ int Reset(){
 
   BYTE ackResult;
 
-  ParPortWrite(MSG_RESET);
-  
-  ackResult = ParPortRead();	
+  //Write PING Command to PIC.
+  ParPortWrite(MSG_RESET); 
 
-  if( ackResult != MSG_ACK_RESET ) {
+  ackResult=ParPortRead();
+
+  if( ackResult != MSG_ACK_RESET ){
     printf("\nStatus: Reset command failed");
     return FALSE ;
   }
+  
+  printf("\nStatus: Reset command success");
+  return TRUE ;
 
-  return TRUE ; 
 }
 
 
@@ -260,22 +278,49 @@ int Reset(){
 
 int Get(){
 
-  BYTE ackResult;
-
-  //Write GET Command to PIC.
-  ParPortWrite(MSG_GET);
-  
-  //Place Get Code Here
-
-  //Read the ACK from the GET on the data line.
-  ackResult = ParPortRead();
-
-  if( ackResult != MSG_ACK_GET) {
-    printf("\nStatus: Get command failed");
-    return FALSE ;
-  }
-
-  return TRUE;
+    BYTE ackResult;
+    
+    //Write GET Command to PIC.
+    ParPortWrite(MSG_GET);
+    /*
+    int x=0;
+    while(x<19)
+      {
+	ParPortRead();
+	x++;     
+      }
+    */
+   //Read the ACK from the GET on the data line.
+    ackResult = ParPortRead();
+    
+    if( ackResult != MSG_ACK_GET) {
+      printf("\nStatus: Get command failed");
+        return FALSE ;
+    }
+    
+    //Read 3 ADC Nibles and assemble them
+    adcResult = ( ParPortRead() << 8 ) & 0x0300; // bit 8 and 9.
+    adcResult |= ReadByte(); // ReadByte reads low Byte and
+    
+    
+    // Read RTC data for all 8 Bytes of information.
+    int i ;
+    for(i = 0 ; i < 8 ; i++) {
+      RTCData[i] = ReadByte() ;
+    }
+    
+    //Read the ACK from the GET on the data line.
+    ackResult = ParPortRead();
+    
+    if( ackResult != MSG_ACK_GET) {
+      printf("\nStatus: Get command failed");
+        return FALSE ;
+    }
+    
+      // Display Data
+      DisplayData();
+    
+    return TRUE;
 }
 
 
@@ -289,22 +334,54 @@ int Ping(){
   //Write PING Command to PIC.
   ParPortWrite(MSG_PING); 
 
-  //Read the ACK from the PING on the data line.
-  ackResult = ParPortRead();
+  ackResult=ParPortRead();
 
   if( ackResult != MSG_ACK_PING ){
     printf("\nStatus: Ping command failed");
     return FALSE ;
   }
   
+  printf("\nStatus: Ping command success");
   return TRUE ;
 }
 
 //------------------------------- DisplayData --------------------------------------------
 //Purpose: Diaplay the ADC and RTC data retreived from the PIC. 
 
-void DisplayData(BYTE RTCData[], int adcResult ){
-
+void DisplayData(){
+ char day ;
+    
+    switch ( RTCData[3] ) {
+        case 2:
+            day = 'M';
+            break;
+        case 3:
+            day = 'T';
+            break;
+        case 4:
+            day = 'W';
+            break;
+        case 5:
+            day = 'R';
+            break;
+        case 6:
+            day = 'F';
+            break;
+        case 7:
+            day = 'S';
+            break;
+        case 1:
+            day = 'U';
+            break;
+        default:
+            break;
+    }
+   
+    
+    printf("\nADC result: %u" , adcResult) ;
+    
+    //                                                   Hour         Minutes     Seconds          Month        date          year
+    printf("\nTime: %02u:%02u:%02u %c %02u/%02u/20%02u" , RTCData[2], RTCData[1], RTCData[0], day, RTCData[5], RTCData[4], RTCData[6] );
 
 }
 
@@ -314,44 +391,11 @@ void DisplayData(BYTE RTCData[], int adcResult ){
 void ClearTerminal()
 {
   //Not using system("clear") because it does not behave corretly.
-  printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-  printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-  sleep(1);
+  //printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+  //printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+  printf("\n\n");
+  //sleep(1);
 }
 
 
-
-/*//Some Get Sudo Code
-  BYTE RTCData[8];
-  BYTE adcHighNibble; 
-  BYTE adcLowByte;
-  int adcResult;
-  BYTE ackResult;
-  
-  // Send Command
-  ParPortWrite(MSG_GET);
-  
-
-  // Read 3 Nible from ADC 
-  adcHighNibble = ParPortRead();
-  adcLowByte = ReadByte();
-  adcResult = ((adcHighNibble&0x0F) * 16 * 16) + adcLowByte ;
-  
-  // Read RTC data for all 8 Bytes of information.
-  int i ;
-  for(i = 0 ; i < 8 ; i++) {
-    RTCData[i] = ReadByte() ;
-  }
-
-  ackResult = ParPortRead();
-
-  // Get Acknowledgement 
-  if( ackResult != MSG_ACK ) {
-    printf("\nStatus: Get command failed");   
-    return FALSE ;
-  }
-
-  // Display Data 
-  DisplayData( RTCData , adcResult );
-  */
 

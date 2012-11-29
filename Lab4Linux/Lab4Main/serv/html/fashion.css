@@ -1,0 +1,9 @@
+BODY,TABLE{
+	background-color: #0088dd;
+	font:menu;
+}
+.thinborder{
+	border-style: solid;
+	border-width: thin; 
+	border-color: black;
+}
