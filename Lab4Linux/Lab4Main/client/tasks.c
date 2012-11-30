@@ -1,292 +1,97 @@
 #include "globals.h"
 #include "tasks.h"
 
-/*
-Interface thread which continuously blocks and waits for standard input (keyboard).
-If data is valid, the matching command code is given to the sensor thread.
-select(), similar to poll(), is used to block and wait for input from the keyboard file descriptor.
-*/
 
-void *interface(void *ptr)
-{
+// Initialization only needed in single threaded application
+RTCData rtcDataStruct = { 1, 2, 3, 4, 5, 6 , 7, 8 };
+Command comandStruct = { MSG_GET, 0 , 0 };
+ADCData adcData = 0;
 
-/*
-	fd_set interface_fds, test_fds;
-	int fd;
-	char input[INPUT_SIZE];
-	char *ping = "ping";
+/*--------------------userInterface()-------------------
+ Manages a user interface that reads in commands from the
+ stdout
+ ------------------------------------------------------*/
+void *userInterface(void *pointer){
+    
+    // Used in file descriptor set implementation
+    char *ping = "ping";
 	char *reset = "reset";
 	char *get = "get";
 	char *enable = "enable";
 	char *disable = "disable";
 	char *between = "between";
 	char *outside = "outside";
-	char delims[] = " ";
-	char newline[] = "\n";
-	char *result = NULL;
-
     
+   /*
+    int cmd; //Command read from the command line.
+    int ignored; //Ignored character buffer for the command line.
     
-    // Four macros are provided to manipulate the sets. 
-     // FD_ZERO() clears a set. 
-   // FD_SET() and FD_CLR() respectively add and remove a given file descriptor from a set. 
-     // FD_ISSET() tests to see if a file descriptor is part of the set; this is useful after select() returns.
-     
-	FD_ZERO(&interface_fds); // Initialize file descriptor set
-	FD_SET(KEYBOARD, &interface_fds); // Adds standard input file descriptor (always 0) to file descriptor set
-
-	while (1)
-	{
-		test_fds = interface_fds;
-		
-        pthread_mutex_lock(&command_mutex); // Grab the mutex to pause other threads while printing the interface
-		printf("\nEnter Command (ping, reset, get, enable, disable, between [PARAM1] [PARAM2], outside [PARAM1] [PARAM2]) or press Ctrl-c to quit: ");
-        fflush(stdout); // Flush the printf statement inside the standard output buffer in case it's stuck
-		pthread_mutex_unlock(&command_mutex); // Interface is printed, now release the mutex
-		
+    while(TRUE){
+        
+        //Prompt user with the program operation.
+        printf("\n\nWhen entering a command only the first letter will be handled.");
+        printf("\nAll other characters will be ignored.");
+        printf("\n\nCommands:\n\tR = Reset\n\tG = Get\n\tP = Ping\n\tQ = Quit\n");
+        
+        //Ask user for input
+        printf("\n\nEnter a command: ");
+        
+        //------------------------------------------------------TODO: Implement this using file descriptor sets
+        
+        //Handle user input.
+        cmd = getc(stdin);
+        do {
+            ignored = getc(stdin);
+        } while ((ignored != '\n') && (ignored != EOF));
         
         
-         // select() and pselect() allow a program to monitor multiple file descriptors, waiting 
-        // until one or more of the file descriptors become "ready" for some class of I/O operation (e.g., input possible). 
-         // A file descriptor is considered ready if it is possible to perform the corresponding I/O operation (e.g., read(2)) without blocking.
-         
-         //int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
-         
-        select(FD_SETSIZE, &test_fds, NULL, NULL, NULL); // Block and wait for activity from the file descriptor set
-
-		for (fd = 0; fd < FD_SETSIZE; fd++)
-		{
-			if (FD_ISSET(fd, &test_fds)) // Check for activity
-			{
-				if (fd == KEYBOARD) // Did we sense activity from the keyboard?
-				{
-					pthread_mutex_lock(&command_mutex); // Grab mutex to access global data
-					fgets(input, INPUT_SIZE, stdin);
-					result = strtok(input, newline);
-
-					if (!strcmp(ping, result))
-						command = MSG_PING;
-
-					else if (!strcmp(reset, result))
-						command = MSG_RESET;
-
-					else if (!strcmp(get, result))
-						command = MSG_GET;
-
-					else if (!strcmp(enable, result))
-						command = MSG_INTENABLE;
-
-					else if (!strcmp(disable, result))
-						command = MSG_INTDISABLE;
-
-					else if ((result = strtok(input, delims))) // Is the input between or outside?
-					{
-						if (!strcmp(between, result))
-						{
-							command = MSG_INTBETWEEN;
-							if ((result = strtok(NULL, delims))) // Get the upper and lower boundaries
-							{
-								low_bound = (unsigned char)atoi(result);
-								if ((result = strtok(NULL, newline)))
-									high_bound = (unsigned char)atoi(result);
-							}
-						}
-						else if (!strcmp(outside, result))
-						{
-							command = MSG_INTOUTSIDE;
-							if ((result = strtok(NULL, delims))) // Get the upper and lower boundaries
-							{
-								low_bound = (unsigned char)atoi(result);
-								if ((result = strtok(NULL, newline)))
-									high_bound = (unsigned char)atoi(result);
-							}
-						}
-						else
-							command = MSG_NOTHING;
-					}
-					else
-						command = MSG_NOTHING;
-
-					pthread_mutex_unlock(&command_mutex); // Release the mutex
-				}
-			}
-		}
-
-		sleep(1); // Let the other threads work long enough so that any output is printed BEFORE the next interface print
-	}
-
+        //------------------------------------------------------TODO: Switch Statment might not work with file descriptor sets
+        // Handle command operation.
+        switch(toupper(cmd)){
+            case 'R':
+                ClearTerminal();
+                printf("Reset Command");
+                comandStruct.command = MSG_RESET;
+                break;
+            case 'G':
+                ClearTerminal();
+                printf("Get Command");
+                comandStruct.command = MSG_GET;
+                break;
+            case 'P':
+                ClearTerminal();
+                printf("Ping Command");
+                comandStruct.command = MSG_PING;
+                break;
+            case 'Q':
+                ClearTerminal();
+                printf("Quit Command\n");
+                return 0;
+                break;
+            default:
+                printf("Command not valid. Enter(R, G, P, Q)");
+                break;
+        }
+        DisplayData();
+    }
+    */
+    
 	return (void *)NULL;
-*/
+    
 }
 
-/*
-sensor()
-This is the function that will be executed by the sensor thread.
-No arguments will be passed in as *ptr
-*/
-void *sensor(void *ptr)
+/*--------------------sensorControl()-------------------
+ Communicates with the sensor and updates the ADC value
+ ------------------------------------------------------*/
+void *sensorControl(void *pointer)
 {
-/*
-	// File pointer that represents the sensor device 
-	FILE *sensor_device;
-	// Strings to send to the sensor device for various operations 
-	char STRING_RESET[]     = "reset";
-	char STRING_PING[]      = "ping";
-	char STRING_BETWEEN[20] = {0};  //We'll have to sprintf into these later.
-	char STRING_OUTSIDE[20] = {0};
-	char STRING_ENABLE[]    = "enable";
-	char STRING_DISABLE[]   = "disable";
-	// The value produced by the sensor's 8-bit ADC 
-	unsigned char sensor_value[2] = {MSG_NOTHING, MSG_NOTHING};
-	// Used to verify device driver read and writes 
-	size_t ret; //Short for "return"
-	int sensor_poll = 0;
-	struct pollfd mypollfd;
-
-
-	// Open the sensor with file operations. 
-	// This uses our device driver from Lab 3. 
-
-
-	// Main Loop 
-	while (1)
-	{
-
-		sensor_device = fopen("/dev/pp_adc", "w");
-		if ( !sensor_device )
-		{
-			fprintf(stderr, "sensor thread: fopen\n");
-			exit(1);
-		}
-
-		// Hold onto command mutex until it's done processing commands, if any 
-		pthread_mutex_lock(&command_mutex);
-
-		if(command != MSG_NOTHING)
-		{
-
-			switch (command)
-			{
-			case MSG_RESET:
-				ret = fwrite( STRING_RESET, sizeof(char), strlen(STRING_RESET), sensor_device);
-				if (!ret) fprintf(stderr, "fwrite error\n");
-				if (sensor_poll == 2) { sensor_poll = 1; }
-				break;
-
-			case MSG_PING:
-				ret = fwrite( STRING_PING, sizeof(char), strlen(STRING_PING), sensor_device);
-				if (!ret) fprintf(stderr, "fwrite error\n");
-				break;
-
-			case MSG_GET:
-				// Read two bytes from the device 
-				fclose(sensor_device);
-				sensor_device = fopen("/dev/pp_adc", "r");
-				if ( !sensor_device )
-				{
-					fprintf(stderr, "sensor thread: fopen\n");
-					exit(1);
-				}
-				ret = fread( sensor_value, sizeof(unsigned char), 2, sensor_device );
-				if (!ret) fprintf(stderr, "fread error\n");
-				printf("Sensor Value: %d, sensor_value\n", (int)sensor_value[0]);
-				fflush(stdout);
-				break;
-
-			case MSG_INTBETWEEN:
-				//Format the command string 
-				sprintf( STRING_BETWEEN, "between %d %d", low_bound, high_bound);
-				// Write the command string to the device 
-				ret = fwrite( STRING_BETWEEN, sizeof(char), strlen(STRING_BETWEEN), sensor_device);
-				if (!ret) fprintf(stderr, "fwrite error\n");
-				break;
-
-			case MSG_INTOUTSIDE:
-				// Format the command string 
-				sprintf( STRING_OUTSIDE, "outside %d %d", low_bound, high_bound);
-				// Write the command string to the device 
-				ret = fwrite( STRING_OUTSIDE, sizeof(char), strlen(STRING_OUTSIDE), sensor_device);
-				break;
-
-			case MSG_INTENABLE:
-				ret = fwrite( STRING_ENABLE, sizeof(char), strlen(STRING_ENABLE), sensor_device);
-				if (!ret){ fprintf(stderr, "fwrite error\n"); }
-				sensor_poll = 1;
-				break;
-
-			case MSG_INTDISABLE:
-				ret = fwrite( STRING_DISABLE, sizeof(char), strlen(STRING_DISABLE), sensor_device);
-				if (!ret){ fprintf(stderr, "fwrite error\n"); }
-				sensor_poll = 0;
-				break;
-
-			default:
-				// Unrecognized command type: this is bad 
-				fprintf(stderr, "sensor thread: unrecognized command type\n");
-				break;
-			}
-
-			// Clear the command because we have already serviced it. 
-			command = MSG_NOTHING;
-
-		}
-
-		// Done servicing the command 
-		pthread_mutex_unlock( &command_mutex );
-		fclose(sensor_device);
-
-		// Now fill out the Url_Data so the communication thread 
-		// can send the info to Luo's server. 
-		pthread_mutex_lock( &communication_mutex );  //Acquire rights to change the Url_Data.
-
-		sensor_device = fopen("/dev/pp_adc", "r");
-		if ( !sensor_device )
-		{
-			fprintf(stderr, "sensor thread: fopen\n");
-			exit(1);
-		}
-
-		if (sensor_poll == 1)
-		{
-			mypollfd.fd=fileno(sensor_device);
-			mypollfd.events=POLLRDBAND;
-			mypollfd.revents=0;
-
-			int result=poll(&mypollfd, 1, TIMEOUT);
-
-			if(result){
-				printf("\n\nInterrupt! Enter reset\n\n");
-				fflush(stdout);
-				sensor_poll = 2;
-			}
-		}
-
-		ret = fread( sensor_value, sizeof(unsigned char), 2, sensor_device );
-		if (!ret)
-		{
-			sprintf(Url_Data.status, "read failure");
-		} else {
-			sprintf(Url_Data.status, "up"); //TODO this might not be best
-		}
-
-		Url_Data.data = ( unsigned int ) sensor_value[0]; //Update the sensor value.
-		pthread_mutex_unlock( &communication_mutex );  //Release the mutex.
-		fclose(sensor_device);
-
-		// Give up the CPU 
-		usleep(0);
-	}
-
-	// For errors: 
-	fprintf(stderr, "wut");
-	exit(1);
-*/
+    return (void *)NULL;
 }
 
-/*--------------------communicate()-------------------
+/*--------------------serverCommunication()------------
 Performs the communication with the server
 ------------------------------------------------------*/
-void *communicate(void *ptr)
+void *serverCommunication(void *pointer)
 {
     
     const char* hostname="localhost";
@@ -310,41 +115,9 @@ void *communicate(void *ptr)
     
 	HTTP_GET(buf);
     
-/*	
-const char* hostname="cans.uml.edu";
-	const int   port=8080;
-	const int   id=2;
-	const char* password="banana";
-	const char* name="Shamrock";
-	const int data=150;
-
-	char buf[1024];
-
-	while (1)
-	{
-		pthread_mutex_lock( &communication_mutex );
-
-		// Format the URL string
-		snprintf(buf, 1024, "http://%s:%d/update?id=%d&password=%s&name=%s&data=%u&status=%s",
-			hostname,
-			port,
-			id,
-			password,
-			name,
-			Url_Data.data,
-			Url_Data.status);
-
-		// Send the URL to the server
-		HTTP_GET(buf);
-
-		pthread_mutex_unlock( &communication_mutex );
-
-		// Give up the CPU
-		usleep(0);
-	}
 
 	return (void *) NULL;
-*/
+
 }
 
 /*-------------------------HTTP_GET()----------------------
@@ -360,10 +133,62 @@ void HTTP_GET(const char* url){
 	}
 }
 
+//--------------------- DisplayData -------------------------
+//Purpose: Diaplay the ADC and RTC data retreived from the PIC.
 
-/*
-size_t dummy(void *nothing1, size_t nothing2, size_t nothing3, void *nothing4)
-{
-	return 0;
+void DisplayData(void){
+    char day ;
+    
+    switch ( rtcDataStruct.day ) {
+        case 2:
+            day = 'M';
+            break;
+        case 3:
+            day = 'T';
+            break;
+        case 4:
+            day = 'W';
+            break;
+        case 5:
+            day = 'R';
+            break;
+        case 6:
+            day = 'F';
+            break;
+        case 7:
+            day = 'S';
+            break;
+        case 1:
+            day = 'U';
+            break;
+        default:
+            break;
+    }
+    
+    
+    printf("\nADC result: %u" , adcData) ;
+    
+    printf("\nTime: %02u:%02u:%02u %c %02u/%02u/20%02u" ,
+           rtcDataStruct.hour,
+           rtcDataStruct.minutes,
+           rtcDataStruct.seconds,
+           day,
+           rtcDataStruct.month,
+           rtcDataStruct.date,
+           rtcDataStruct.year );  
+    
 }
-*/
+
+//------------------------------- ClearTerminal ------------------------------------------
+//Purpose: Clear the terminal screen.
+
+void ClearTerminal()
+{
+    
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    printf("\n\n");
+}
+
+
+

@@ -10,7 +10,12 @@
 
 
 int main(void){
-    
 
+    ClearTerminal();
+    userInterface((void*)NULL);
+    
+    //    pointer = sensorControl(pointer);
+    //    pointer = serverComunication(pointer);
+    
 	return 0;
 }

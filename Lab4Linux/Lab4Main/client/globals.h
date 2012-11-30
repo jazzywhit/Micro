@@ -11,20 +11,57 @@
 #include <sys/select.h>
 #include <curl/curl.h>
 #include <poll.h>
-/*
-// ADC Device Instructions
-#define MSG_RESET      0x0
+#include <ctype.h>
+
+#define WAIT_TIME 10        //Delay
+
 #define MSG_PING       0x1
+#define MSG_ACK_PING 0xE
+
 #define MSG_GET        0x2
-#define MSG_INTBETWEEN 0x3
-#define MSG_INTOUTSIDE 0x4
-#define MSG_INTENABLE  0x5
-#define MSG_INTDISABLE 0x6
+#define MSG_ACK_GET    0xD
 
-// ADC Device Responses
-#define MSG_ACK        0xE
-#define MSG_NOTHING    0xF
+#define MSG_RESET      0x3
+#define MSG_ACK_RESET 0xC
 
+#define MSG_INTBETWEEN 0x4
+#define MSG_ACK_INTBETWEEN 0xB
+
+#define MSG_INTOUTSIDE 0x5
+#define MSG_ACK_INTOUTSIDE 0xA
+
+#define MSG_INTENABLE  0x6
+#define MSG_ACK_INTENABLE 0x9
+
+#define MSG_INTDISABLE 0x8
+#define MSG_ACK_INTDISABLE 0xF
+
+#define TRUE 1
+#define FALSE 0
+
+
+// Typedefs
+typedef struct{
+    unsigned char seconds;
+    unsigned char minutes;
+    unsigned char hour;
+    unsigned char day;
+    unsigned char date;
+    unsigned char month;
+    unsigned char year;
+    unsigned char control;
+}RTCData;
+
+typedef unsigned short ADCData;
+
+typedef struct{
+    unsigned char command;
+    ADCData highBound ;
+    ADCData lowBound;
+}Command;
+
+    
+/*
 // Other Macros
 #define KEYBOARD 0
 #define INPUT_SIZE 20
