@@ -13,7 +13,7 @@
 #include <poll.h>
 #include <ctype.h>
 
-#define WAIT_TIME 10        //Delay
+#define WAIT_TIME 1000       //Delay
 
 #define MSG_PING       0x1
 #define MSG_ACK_PING 0xE
@@ -60,7 +60,7 @@ typedef struct{
     ADCData lowBound;
 }Command;
 
-    
+
 /*
 // Other Macros
 #define KEYBOARD 0
