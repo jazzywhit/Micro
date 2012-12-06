@@ -144,6 +144,8 @@ static struct parport_driver pp_driver={
 module_init(init);
 module_exit(exit);
 
+// String Holding all RTC and ADC data from get function
+static char rtcAndAdcData[STRING_BUFFER_SIZE] = {0};
 
 ///////////////////////////////////////////////////////
 // Function definitions 
@@ -332,10 +334,10 @@ static void writePPNibble(struct pp_adc *p, unsigned char d){
  * Notes:      The parallel port should be claimed before this function
  *              is called. No checking is performed.
  */
-static void writePPByte(struct pp_adc *p, unsigned char d){
-	writePPNibble(p,((d >> 4)& 0x0F));
-	writePPNibble(p,(d & 0x0F));
-}
+//static void writePPByte(struct pp_adc *p, unsigned char d){
+//	writePPNibble(p,((d >> 4)& 0x0F));
+//	writePPNibble(p,(d & 0x0F));
+//}
 
 
 /* readPPNibble
@@ -386,9 +388,11 @@ static unsigned char readPPNibble(struct pp_adc *p){
  *              is called. No checking is performed. 
  */
 static void writePP3Nibble(struct pp_adc *p, int n){
-	printk(KERN_INFO "\n---------------In 3 nibble");
 	unsigned char data;
 	unsigned char ackResult;
+    
+    printk(KERN_INFO "\n---------------In 3 nibble");
+
 
 	// Lower nibble (0-3)
 	data = (n & 0xF);
@@ -415,19 +419,6 @@ static void writePP3Nibble(struct pp_adc *p, int n){
 	printk(KERN_INFO "\nAckData 3 : %X", ackResult);
 }
 
-/* readPP3Nibble
- * Purpose:    Reads the lowest 12-bits (3 nibbles) of an integer 
- *              synchronously from the parallel port with big-endian ordering
- * Parameters: Pointer to a struct pp_adc representing the port
- * Returns:    Integer containing the 12-bits read from the port
- * Notes:      The parallel port should be claimed before this function
- *              is called. No checking is performed. 
- */
-static int readPP3Nibble(struct pp_adc *p){
-	int value=0;
-	
-	return value;
-}
 
 /* pp_adc_irq
  * Purpose:     Called every time an interrupt occurs on a claimed port.
@@ -459,10 +450,11 @@ static void pp_adc_irq(void *handle){
  *             Result of command upon success
  */
 static int cmd_eval(struct pp_adc *p, const char *cmdline){
-	printk(KERN_INFO "In CMD Eval\n");
 	char cmdstr[STRING_BUFFER_SIZE];
 	int params[2];
 	int i;
+
+    printk(KERN_INFO "In CMD Eval\n");
 
 	// Parse the command string for a command and two integer arguments
 	sscanf(cmdline, "%s %d %d", cmdstr, &params[0], &params[1]);
@@ -487,8 +479,8 @@ static int cmd_eval(struct pp_adc *p, const char *cmdline){
  * Returns:    0 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_reset(struct pp_adc *p, int params[2]){
-	printk(KERN_INFO "----------------------------------------------------\nReset\n");
 	unsigned char ackResult;
+	printk(KERN_INFO "----------------------------------------------------\nReset\n");
 
   	//Write RESET Command to PIC.
   	writePPNibble(p,MSG_RESET); 
@@ -522,8 +514,8 @@ ping
  * Returns:    0 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_ping(struct pp_adc *p, int params[2]){
-	printk(KERN_INFO "----------------------------------------------------\nPING\n");
 	unsigned char ackResult;
+	printk(KERN_INFO "----------------------------------------------------\nPING\n");
 
   	//Write PING Command to PIC.
   	writePPNibble(p,MSG_PING); 
@@ -553,8 +545,8 @@ static int cmd_ping(struct pp_adc *p, int params[2]){
  * Returns:    0 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_enable(struct pp_adc *p, int params[2]){
-	printk(KERN_INFO "----------------------------------------------------\nInterrupt Enable\n");
 	unsigned char ackResult;
+	printk(KERN_INFO "----------------------------------------------------\nInterrupt Enable\n");
 
   	//Write INTENABLE Command to PIC.
   	writePPNibble(p,MSG_INTENABLE); 
@@ -582,8 +574,8 @@ static int cmd_enable(struct pp_adc *p, int params[2]){
  * Returns:    0 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_disable(struct pp_adc *p, int params[2]){
-	printk(KERN_INFO "----------------------------------------------------\nInterrupt Disable\n");
 	unsigned char ackResult;
+	printk(KERN_INFO "----------------------------------------------------\nInterrupt Disable\n");
 
   	//Write INTDISABLE Command to PIC.
   	writePPNibble(p,MSG_INTDISABLE); 
@@ -612,9 +604,9 @@ static int cmd_disable(struct pp_adc *p, int params[2]){
  * Returns:    0 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_between(struct pp_adc *p, int params[2]){
-	printk(KERN_INFO "----------------------------------------------------\nInterrupt Disable\n");
 
 	unsigned char ackResult;
+	printk(KERN_INFO "----------------------------------------------------\nInterrupt Disable\n");
 
   	//Write INTDISABLE Command to PIC.
   	writePPNibble(p,MSG_INTBETWEEN); 
@@ -647,8 +639,8 @@ static int cmd_between(struct pp_adc *p, int params[2]){
  * Returns:    0 upon success, -ENODEV if device failed to acknowledge the command
  */
 static int cmd_outside(struct pp_adc *p, int params[2]){
-	printk(KERN_INFO "----------------------------------------------------\nInterrupt Outside\n");
 	unsigned char ackResult;
+	printk(KERN_INFO "----------------------------------------------------\nInterrupt Outside\n");
 
   	//Write INTDISABLE Command to PIC.
   	writePPNibble(p,MSG_INTOUTSIDE); 
@@ -674,7 +666,7 @@ static int cmd_outside(struct pp_adc *p, int params[2]){
 //--------------------------------- Read Byte --------------------------------------------
 //Purpose: Read an entire byte by breaking it up into 4-bit parts.
 
-unsigned char ReadByte(struct pp_adc *p){
+static unsigned char ReadByte(struct pp_adc *p){
  
   unsigned char byte;
   
@@ -686,14 +678,11 @@ unsigned char ReadByte(struct pp_adc *p){
   return byte;  
 }
 
-//------------------------------- DisplayData --------------------------------------------
-//Purpose: Diaplay the ADC and RTC data retreived from the PIC. 
-
-void DisplayData(unsigned char *RTCData, unsigned char *adcResult){
+char getDay(int intDay){
     
     char day ;
     
-    switch ( RTCData[3] ) {
+    switch ( intDay) {
         case 2:
             day = 'M';
             break;
@@ -716,15 +705,56 @@ void DisplayData(unsigned char *RTCData, unsigned char *adcResult){
             day = 'U';
             break;
         default:
+            day = 'Z';
             break;
     }
-   
     
+    return day;
+    
+}
+
+//------------------------------- DisplayData --------------------------------------------
+//Purpose: Diaplay the ADC and RTC data retreived from the PIC. 
+
+void DisplayData(unsigned char *RTCData, unsigned char *adcResult){
+    
+    char day = getDay(RTCData[3]);
     printk(KERN_INFO "\nADC result: %u" , *adcResult) ;
     
-    //                                                   Hour         Minutes     Seconds          Month        date          year
-    printk(KERN_INFO "\nTime: %02u:%02u:%02u %c %02u/%02u/20%02u" , RTCData[2], RTCData[1], RTCData[0], day, RTCData[5], RTCData[4], RTCData[6] );
+     printk(KERN_INFO "\nTime: %02u:%02u:%02u %c %02u/%02u/20%02u" ,
+           RTCData[2], // Hour
+           RTCData[1], // Minutes
+           RTCData[0], // Seconds
+           day,
+           RTCData[5], // Month
+           RTCData[4], // Date
+           RTCData[6] ); // Year
+  
+       
+}
 
+//------------------------------- formatData --------------------------------------------
+//Purpose: Formats the ADC and RTC data retreived from the PIC.
+static int formatResultString(unsigned char *RTCData, unsigned char *adcResult){
+    
+    int numberOfCharactersCopied = 0;
+    char day = getDay(RTCData[3]);
+    
+    // Copy get results to global string buffer so it can be later passed to user space.
+    numberOfCharactersCopied = snprintf(rtcAndAdcData, STRING_BUFFER_SIZE,  "\nADC result: %u\nTime: %02u:%02u:%02u %c %02u/%02u/20%02u" ,
+             *adcResult,
+             RTCData[2], // Hour
+             RTCData[1], // Minutes
+             RTCData[0], // Seconds
+             day,
+             RTCData[5], // Month
+             RTCData[4], // Date
+             RTCData[6] );  // Year
+    
+    printk(KERN_INFO, "The following string was copied to user space buffer") ;
+    printk(KERN_INFO, rtcAndAdcData);
+    
+    return numberOfCharactersCopied;
 }
 
 /* cmd_get
@@ -737,12 +767,14 @@ void DisplayData(unsigned char *RTCData, unsigned char *adcResult){
  */
 static int cmd_get(struct pp_adc *p, int params[2]){
 
-    printk(KERN_INFO "In Get\n");
 
     unsigned char ackResult;
     unsigned char adcResult;
     unsigned char RTCData[8];
+    int i ;
     
+    printk(KERN_INFO "In Get\n");
+
     //Write GET Command to PIC.
     writePPNibble(p, MSG_GET);
 
@@ -760,7 +792,7 @@ static int cmd_get(struct pp_adc *p, int params[2]){
     
     
     // Read RTC data for all 8 Bytes of information.
-    int i ;
+
     for(i = 0 ; i < 8 ; i++) {
       RTCData[i] = ReadByte(p) ;
     }
@@ -773,13 +805,18 @@ static int cmd_get(struct pp_adc *p, int params[2]){
         return 0 ;
     }
     
-      // Display Data
+    // Display Data
     DisplayData(RTCData, &adcResult);
+    
+    // Copy result to global buffer
+    i = formatResultString(RTCData, &adcResult); // we can test i if needed
+    //-------------------------------------------TODO: Go into hook read and copy this string  to user space instead
     
     //Reset the IRQ Counter
     p->irq_counter = 0;
 
     return 1;
+
 }
 
 
@@ -795,9 +832,11 @@ static int cmd_get(struct pp_adc *p, int params[2]){
  *          0 if the port was successfully claimed and the device responded
  */
 static int hook_open(struct inode *inodep, struct file *filp){
-	printk(KERN_INFO "In Hook Open\n" );		
 	struct pp_adc *p;
 	int i;
+    
+    printk(KERN_INFO "In Hook Open\n" );
+
 	// Search for the pp_adc in pp_adc_list that this file represents
 	list_for_each_entry(p, &pp_adc_list, list)
 		if(p->device_number==inodep->i_rdev)
@@ -835,10 +874,12 @@ static int hook_open(struct inode *inodep, struct file *filp){
  * Returns: 0: Success
  */
 static int hook_close(struct inode *inodep, struct file *filp){
-	printk(KERN_INFO "In Hook Close\n" );
 	struct pp_adc *p=(struct pp_adc *)filp->private_data;
 	// If something is calling "close", then they were able to "open" successfully
-	parport_release(p->pardev);
+	printk(KERN_INFO "In Hook Close\n" );
+
+	
+    parport_release(p->pardev);
 	p->claimed=0;
 	printk(KERN_INFO "%s: %s released\n", DRIVER_NAME, p->name);
 	return 0;
@@ -850,11 +891,11 @@ static int hook_close(struct inode *inodep, struct file *filp){
  * Returns: Number of bytes sent back to user-space (0 if device failed to respond)
  */
 static ssize_t hook_read(struct file *filp, char __user *buffer, size_t size, loff_t *offset){
-	printk(KERN_INFO "In Hook Read\n" );	
 	struct pp_adc *p=(struct pp_adc *)filp->private_data;
 	int value=0;
 	int count;
 	char kbuf[STRING_BUFFER_SIZE];
+	printk(KERN_INFO "In Hook Read\n" );
 
 	// read ADC value from sensor
 	if(*offset!=0)
@@ -889,9 +930,11 @@ static ssize_t hook_read(struct file *filp, char __user *buffer, size_t size, lo
  * Returns: Number of bytes read from user-space (Always the number sent down)
  */
 static ssize_t hook_write(struct file *filp, const char __user *buffer, size_t size, loff_t *offset){
-	printk(KERN_INFO "In Hook Write\n" );
 	struct pp_adc *p=(struct pp_adc *)filp->private_data;
 	char kbuf[STRING_BUFFER_SIZE+1]={0};
+    
+    printk(KERN_INFO "In Hook Write\n" );
+
         // get commands from user space
         copy_from_user(kbuf, buffer, MIN(STRING_BUFFER_SIZE, size));
 
@@ -919,10 +962,11 @@ static ssize_t hook_write(struct file *filp, const char __user *buffer, size_t s
  *           for this method to be useful for another interrupt)
  */
 static unsigned int hook_poll(struct file *filp, poll_table *wait){
-	printk(KERN_INFO "In Hook Poll\n" );
-        struct pp_adc *p=(struct pp_adc *) filp->private_data;
-        poll_wait(filp, &p->irq_wq, wait);
-        return (POLLIN | POLLRDNORM) | (p->irq_counter ? POLLRDBAND : 0);
+    struct pp_adc *p=(struct pp_adc *) filp->private_data;
+    printk(KERN_INFO "In Hook Poll\n" );
+    
+    poll_wait(filp, &p->irq_wq, wait);
+    return (POLLIN | POLLRDNORM) | (p->irq_counter ? POLLRDBAND : 0);
 }
 
 
