@@ -6,11 +6,11 @@
 // Locks
 pthread_mutex_t stdoutMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t sensorDataMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t comandMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t commandMutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Initialization only needed in single threaded application
 RTCData rtcDataStruct = { 1, 2, 3, 4, 5, 6 , 7, 8 };
-Command comandStruct = { MSG_GET, 0 , 0 };
+Command commandStruct = { MSG_NOTHING, 0 , 0 };
 ADCData adcData = 0;
 
 
@@ -36,8 +36,6 @@ void *userInterface(void *pointer){
     unsigned short low;
     unsigned short high;
     
-    int ignored; // Ignored character buffer for the command line.
-    
     while(TRUE){
         
         pthread_mutex_lock(&stdoutMutex); // <-----------------------LOCK STDOUT
@@ -47,7 +45,7 @@ void *userInterface(void *pointer){
         //Prompt user with the program operation.
         printf("\n\nWhen entering a command only the first letter will be handled.");
         printf("\nAll other characters will be ignored.");
-        printf("\n\nCommands:\n\tE = Enable\n\tD = Disable\n\tB = Between\n\tO = Outiside\n\tR = Reset\n\tG = Get\n\tP = Ping\n\tQ = Quit\n");
+        printf("\n\nCommands:\n\tE = Enable\n\tD = Disable\n\tB = Between\n\tO = Outside\n\tR = Reset\n\tG = Get\n\tP = Ping\n\tQ = Quit\n");
         
         //Ask user for input
         printf("\n\nEnter a command: ");
@@ -56,55 +54,61 @@ void *userInterface(void *pointer){
         scanf("%c", &cmd);
        
         // If between or Outside read next 2 numbers
-        if (toupper(cmd) == 'B'  || toupper(cmd) == 'O' ) scanf("%hu%hu" , &low, &high);
+        if (toupper(cmd) == 'B'  || toupper(cmd) == 'O' ) {
+            int scanfTest = scanf("%hu%hu" , &low, &high);
+            if (scanfTest != 2) {
+                printf("\ERROR: You must enter the lower and upper bounds with B and O.");
+                 pthread_exit(NULL);
+            }
+        }
         
         // Empty stdin buffer
         while (getchar() != '\n');
         
-        pthread_mutex_lock(&comandMutex); // <----------------------LOCK COMMAND
+        pthread_mutex_lock(&commandMutex); // <----------------------LOCK COMMAND
 
         // Handle command operation.
         switch(toupper(cmd)){
             case 'E':
                 ClearTerminal();
                 printf("Enable Command");
-                comandStruct.command = MSG_INTENABLE;
+                commandStruct.command = MSG_INTENABLE;
                 break;
             case 'D':
                 ClearTerminal();
                 printf("Disable Command");
-                comandStruct.command = MSG_INTDISABLE;
+                commandStruct.command = MSG_INTDISABLE;
                 break;
             case 'B':
                 ClearTerminal();
-                comandStruct.lowBound = low;
-                comandStruct.highBound = high;
-                printf("Between Command, Low bound: %hu  High bound: %hu", comandStruct.lowBound, comandStruct.highBound);
+                commandStruct.lowBound = low;
+                commandStruct.highBound = high;
+                printf("Between Command, Low bound: %hu  High bound: %hu", commandStruct.lowBound, commandStruct.highBound);
 
-                comandStruct.command = MSG_INTBETWEEN;
+                commandStruct.command = MSG_INTBETWEEN;
                 break;
             case 'O':
                 ClearTerminal();
-                comandStruct.lowBound = low;
-                comandStruct.highBound = high;
-                printf("Outside Command, Low bound: %hu  High bound: %hu", comandStruct.lowBound, comandStruct.highBound);
+                commandStruct.lowBound = low;
+                commandStruct.highBound = high;
+                printf("Outside Command, Low bound: %hu  High bound: %hu", commandStruct.lowBound, commandStruct.highBound);
 
-                comandStruct.command = MSG_INTOUTSIDE;
+                commandStruct.command = MSG_INTOUTSIDE;
                 break;
             case 'R':
                 ClearTerminal();
                 printf("Reset Command");
-                comandStruct.command = MSG_RESET;
+                commandStruct.command = MSG_RESET;
                 break;
             case 'G':
                 ClearTerminal();
                 printf("Get Command");
-                comandStruct.command = MSG_GET;
+                commandStruct.command = MSG_GET;
                 break;
             case 'P':
                 ClearTerminal();
                 printf("Ping Command");
-                comandStruct.command = MSG_PING;
+                commandStruct.command = MSG_PING;
                 break;
             case 'Q':
                 ClearTerminal();
@@ -116,7 +120,7 @@ void *userInterface(void *pointer){
                 printf("Command not valid. Enter(R, G, P, Q)");
                 break;
         }
-        pthread_mutex_unlock(&comandMutex); // <----------------------UNLOCK COMMAND
+        pthread_mutex_unlock(&commandMutex); // <----------------------UNLOCK COMMAND
        
         DisplayData();
         usleep(WAIT_TIME);
@@ -136,18 +140,132 @@ void *userInterface(void *pointer){
  ------------------------------------------------------*/
 void *sensorControl(void *pointer)
 {
-    while (1) {
-        
-        
-        pthread_mutex_lock(&stdoutMutex); // <-----------------------LOCK STDOUT
-        printf("\n-------------------------------IN SENSOR CONTROL FUNCTION-------------------------------\n");
-        pthread_mutex_unlock(&stdoutMutex); // <-----------------------UNLOCK STDOUT
+	/* File pointer that represents the sensor device */
+	FILE *sensor_device;
+    
+	/* Strings to send to the sensor device for various operations */
+	char RESET_COMMAND[]     = "reset";
+	char PING_COMMAND[]      = "ping";
+	char ENABLE_COMMAND[]    = "enable";
+	char DISABLE_COMMAND[]   = "disable";
+	char OUTSIDE_COMMAND[20] = {0};
+	char INSIDE_COMMAND[20]  = {0};
+	char GET_COMMAND[]  = "get";
 
+	int ret;	
+    
+	//Loop for Sensor Control
+    while (1) {
+        sensor_device = fopen("/dev/pp0adc", "w");
+		if ( !sensor_device )
+		{
+			fprintf(stderr, "sensor thread: fopen\n");
+			exit(1);
+		}
+        
+		//**Service Command**
+		
+		pthread_mutex_lock(&stdoutMutex); // <-----------------------LOCK STDOUT
+		
+        printf("\n-------------------------------IN SENSOR CONTROL FUNCTION-------------------------------\n");
+        if(commandStruct.command != MSG_NOTHING){
+            switch(commandStruct.command)
+            {
+                case MSG_PING:
+                    ret = fwrite( PING_COMMAND, sizeof(char), strlen(PING_COMMAND), sensor_device);
+                    if(!ret)
+                        fprintf(stderr, "fwrite error\n");
+                    else
+                        printf("Ping Worked");
+                    
+                    break;
+                    
+                case MSG_RESET:
+                    ret = fwrite( RESET_COMMAND, sizeof(char), strlen(RESET_COMMAND), sensor_device);
+                    if(!ret)
+                        fprintf(stderr, "fwrite error\n");
+                    else
+                        printf("Reset Worked");
+                    
+                    break;
+                    
+                case MSG_INTDISABLE:
+                    ret = fwrite( DISABLE_COMMAND, sizeof(char), strlen(DISABLE_COMMAND), sensor_device);
+                    if(!ret)
+                        fprintf(stderr, "fwrite error\n");
+                    else
+                        printf("Disable Worked");
+                    
+                    break;
+                    
+                case MSG_INTENABLE:
+                    ret = fwrite( ENABLE_COMMAND, sizeof(char), strlen(ENABLE_COMMAND), sensor_device);
+                    if(!ret)
+                        fprintf(stderr, "fwrite error\n");
+                    else
+                        printf("Enable Worked");
+                    
+                    break;
+                case MSG_INTBETWEEN:
+                    
+                    // Format string command
+                    sprintf( INSIDE_COMMAND, "between %d %d", commandStruct.lowBound, commandStruct.highBound);
+                    
+                    ret = fwrite( INSIDE_COMMAND, sizeof(char), strlen(INSIDE_COMMAND), sensor_device);
+                    
+                    if(!ret)
+                        fprintf(stderr, "fwrite error\n");
+                    else
+                        printf("Between Worked");
+                    
+                    break;
+                    
+                case MSG_INTOUTSIDE:
+                    
+                    // Format string command
+                    sprintf( OUTSIDE_COMMAND, "outside %d %d", commandStruct.lowBound, commandStruct.highBound);
+                    
+                    ret = fwrite( OUTSIDE_COMMAND, sizeof(char), strlen(INSIDE_COMMAND), sensor_device);
+                    if(!ret)
+                        fprintf(stderr, "fwrite error\n");
+                    else
+                        printf("Outside Worked");
+                    
+                    break;
+                    
+
+		case MSG_GET:
+                    ret = fwrite( GET_COMMAND, sizeof(char), strlen(GET_COMMAND), sensor_device);
+                    if(!ret)
+                        fprintf(stderr, "fwrite error\n");
+                    else
+                        printf("Get Worked");
+                    
+                    break;
+                    
+                default:
+                    /* Unrecognized command type: this is bad */
+                    fprintf(stderr, "sensor thread: unrecognized command type\n");
+                    break;
+                    
+            }
+            commandStruct.command = MSG_NOTHING; //Set Command to do nothing after command completes, otherwise the last command with execute over and over.
+        }
+        
+        pthread_mutex_unlock(&stdoutMutex); // <-----------------------UNLOCK STDOUT
+        
+        //**Stop Serving Command**
+        
+        fclose(sensor_device);
+        
         // Give up the CPU for a while
         usleep(WAIT_TIME);
     }
     pthread_exit(NULL);
 }
+
+
+
 
 /*--------------------serverCommunication()------------
 Performs the communication with the server
@@ -254,11 +372,12 @@ void DisplayData(void){
 
 void ClearTerminal()
 {
-    
-    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    printf("\n\n");
+    if (CLEAR_TERMINAL_ENABLE) {
+        
+        printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+        printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+        printf("\n\n");
+    }
 }
-
 
 

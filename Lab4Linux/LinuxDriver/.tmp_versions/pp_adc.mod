@@ -1,2 +1,2 @@
-/home/shouldabeengangstas/github/Micro/Lab2Linux/pp_adc.ko
-/home/shouldabeengangstas/github/Micro/Lab2Linux/pp_adc.o
+/home/shouldabeengangstas/Dropbox/GitHub/Micro/Lab4Linux/LinuxDriver/pp_adc.ko
+/home/shouldabeengangstas/Dropbox/GitHub/Micro/Lab4Linux/LinuxDriver/pp_adc.o

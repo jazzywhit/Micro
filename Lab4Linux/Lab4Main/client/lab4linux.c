@@ -44,5 +44,6 @@ int main(void){
     pthread_join(serverComunicationThread, NULL);
     
     // Quit
+
 	return 0;
 }
