@@ -55,4 +55,4 @@ __attribute__((section(".modinfo"))) =
 "depends=parport";
 
 
-MODULE_INFO(srcversion, "57FF9C1CEBAF26900ECF0B6");
+MODULE_INFO(srcversion, "BA4D54C3633A6D88C9EF985");

@@ -122,7 +122,6 @@ void *userInterface(void *pointer){
         }
         pthread_mutex_unlock(&commandMutex); // <----------------------UNLOCK COMMAND
        
-        DisplayData();
         usleep(WAIT_TIME);
             
         pthread_mutex_unlock(&stdoutMutex);// <-----------------------UNLOCK STDOUT
@@ -151,6 +150,7 @@ void *sensorControl(void *pointer)
 	char OUTSIDE_COMMAND[20] = {0};
 	char INSIDE_COMMAND[20]  = {0};
 	char GET_COMMAND[]  = "get";
+	char adcBuffer[]= "Test fucking string";
 
 	int ret;	
     
@@ -171,6 +171,30 @@ void *sensorControl(void *pointer)
         if(commandStruct.command != MSG_NOTHING){
             switch(commandStruct.command)
             {
+					
+		case MSG_GET:
+					
+					ret = fwrite( GET_COMMAND, sizeof(char), strlen(GET_COMMAND), sensor_device);
+
+
+					if ( !sensor_device )
+					{
+						fprintf(stderr, "sensor thread: fopen\n");
+						exit(1);
+					}
+					
+                    
+					if(!ret)
+                        			fprintf(stderr, "fwrite error\n");
+                    else
+                        		printf("Get Worked");
+					ret = fread(adcBuffer, 100,100, sensor_device);
+					//strtok(adcBuffer, " " );
+					//char *adcValue = strtok(adcBuffer, " " );
+					// printf("ADC value: %s", adcValue);
+					printf("\nADC buffer %s", adcBuffer);
+                    break;
+                    
                 case MSG_PING:
                     ret = fwrite( PING_COMMAND, sizeof(char), strlen(PING_COMMAND), sensor_device);
                     if(!ret)
@@ -185,7 +209,12 @@ void *sensorControl(void *pointer)
                     if(!ret)
                         fprintf(stderr, "fwrite error\n");
                     else
-                        printf("Reset Worked");
+                        		printf("Reset Worked");
+					
+					//WHAT THE FUCKING FUCK FIX THIS**********************************************************************************
+					ret = fread(adcBuffer, 100,100, sensor_device);
+					
+					printf("\nADC buffer %s", adcBuffer);
                     
                     break;
                     
@@ -234,15 +263,6 @@ void *sensorControl(void *pointer)
                     break;
                     
 
-		case MSG_GET:
-                    ret = fwrite( GET_COMMAND, sizeof(char), strlen(GET_COMMAND), sensor_device);
-                    if(!ret)
-                        fprintf(stderr, "fwrite error\n");
-                    else
-                        printf("Get Worked");
-                    
-                    break;
-                    
                 default:
                     /* Unrecognized command type: this is bad */
                     fprintf(stderr, "sensor thread: unrecognized command type\n");
@@ -318,52 +338,6 @@ void HTTP_GET(const char* url){
 		curl_easy_perform(curl);
 		curl_easy_cleanup(curl);
 	}
-    
-}
-
-//--------------------- DisplayData -------------------------
-//Purpose: Diaplay the ADC and RTC data retreived from the PIC.
-
-void DisplayData(void){
-    char day ;
-    
-    switch ( rtcDataStruct.day ) {
-        case 2:
-            day = 'M';
-            break;
-        case 3:
-            day = 'T';
-            break;
-        case 4:
-            day = 'W';
-            break;
-        case 5:
-            day = 'R';
-            break;
-        case 6:
-            day = 'F';
-            break;
-        case 7:
-            day = 'S';
-            break;
-        case 1:
-            day = 'U';
-            break;
-        default:
-            break;
-    }
-    
-    
-    printf("\nADC result: %u" , adcData) ;
-    
-    printf("\nTime: %02u:%02u:%02u %c %02u/%02u/20%02u" ,
-           rtcDataStruct.hour,
-           rtcDataStruct.minutes,
-           rtcDataStruct.seconds,
-           day,
-           rtcDataStruct.month,
-           rtcDataStruct.date,
-           rtcDataStruct.year );  
     
 }
 

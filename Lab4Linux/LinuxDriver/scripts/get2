@@ -1,0 +1,17 @@
+#!/bin/bash
+
+cat /dev/null > /var/log/syslog
+
+. device
+echo "get" > $DEVICE
+
+read line < $DEVICE
+
+echo $line
+
+sudo ./showlog.sh
+
+
+
+
+
