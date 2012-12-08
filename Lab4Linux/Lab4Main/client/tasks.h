@@ -11,5 +11,7 @@ void HTTP_GET(const char *url);
 void DisplayData(void);
 void ClearTerminal();
 
+#define BUFFER_SIZE  0x40
+
 #endif
 

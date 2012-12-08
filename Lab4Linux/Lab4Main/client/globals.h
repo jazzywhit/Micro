@@ -42,7 +42,7 @@
 #define FALSE 0
 
 // Change this as needed 
-#define CLEAR_TERMINAL_ENABLE 0
+#define CLEAR_TERMINAL_ENABLE 1
 
 
 // Typedefs

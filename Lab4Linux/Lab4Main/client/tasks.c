@@ -140,7 +140,7 @@ void *userInterface(void *pointer){
 void *sensorControl(void *pointer)
 {
 	/* File pointer that represents the sensor device */
-	FILE *sensor_device;
+	FILE *charDevice;
     
 	/* Strings to send to the sensor device for various operations */
 	char RESET_COMMAND[]     = "reset";
@@ -150,20 +150,25 @@ void *sensorControl(void *pointer)
 	char OUTSIDE_COMMAND[20] = {0};
 	char INSIDE_COMMAND[20]  = {0};
 	char GET_COMMAND[]  = "get";
-	char adcBuffer[]= "Test fucking string";
+	char adcBuffer[BUFFER_SIZE];
 
-	int ret;	
+	int test;	
     
 	//Loop for Sensor Control
     while (1) {
-        sensor_device = fopen("/dev/pp0adc", "w");
-		if ( !sensor_device )
+		
+        charDevice = fopen("/dev/pp0adc", "r+");
+		if ( !charDevice )
 		{
+			pthread_mutex_lock(&stdoutMutex); // <-----------------------LOCK STDOUT
+
 			fprintf(stderr, "sensor thread: fopen\n");
 			exit(1);
+		
+			pthread_mutex_unlock(&stdoutMutex); // <-----------------------UNLOCK STDOUT
+
 		}
-        
-		//**Service Command**
+
 		
 		pthread_mutex_lock(&stdoutMutex); // <-----------------------LOCK STDOUT
 		
@@ -174,30 +179,17 @@ void *sensorControl(void *pointer)
 					
 		case MSG_GET:
 					
-					ret = fwrite( GET_COMMAND, sizeof(char), strlen(GET_COMMAND), sensor_device);
-
-
-					if ( !sensor_device )
-					{
-						fprintf(stderr, "sensor thread: fopen\n");
-						exit(1);
-					}
-					
-                    
-					if(!ret)
-                        			fprintf(stderr, "fwrite error\n");
+					test = fwrite( GET_COMMAND, sizeof(char), strlen(GET_COMMAND), charDevice);
+					if(!test)
+						fprintf(stderr, "fwrite error\n");
                     else
-                        		printf("Get Worked");
-					ret = fread(adcBuffer, 100,100, sensor_device);
-					//strtok(adcBuffer, " " );
-					//char *adcValue = strtok(adcBuffer, " " );
-					// printf("ADC value: %s", adcValue);
-					printf("\nADC buffer %s", adcBuffer);
+					test = fread(adcBuffer, sizeof(char), BUFFER_SIZE , charDevice);
+					printf("%s", adcBuffer);
                     break;
                     
                 case MSG_PING:
-                    ret = fwrite( PING_COMMAND, sizeof(char), strlen(PING_COMMAND), sensor_device);
-                    if(!ret)
+                    test = fwrite( PING_COMMAND, sizeof(char), strlen(PING_COMMAND), charDevice);
+                    if(!test)
                         fprintf(stderr, "fwrite error\n");
                     else
                         printf("Ping Worked");
@@ -205,22 +197,17 @@ void *sensorControl(void *pointer)
                     break;
                     
                 case MSG_RESET:
-                    ret = fwrite( RESET_COMMAND, sizeof(char), strlen(RESET_COMMAND), sensor_device);
-                    if(!ret)
+                    test = fwrite( RESET_COMMAND, sizeof(char), strlen(RESET_COMMAND), charDevice);
+                    if(!test)
                         fprintf(stderr, "fwrite error\n");
                     else
-                        		printf("Reset Worked");
+						printf("Reset Worked");
 					
-					//WHAT THE FUCKING FUCK FIX THIS**********************************************************************************
-					ret = fread(adcBuffer, 100,100, sensor_device);
-					
-					printf("\nADC buffer %s", adcBuffer);
-                    
                     break;
                     
                 case MSG_INTDISABLE:
-                    ret = fwrite( DISABLE_COMMAND, sizeof(char), strlen(DISABLE_COMMAND), sensor_device);
-                    if(!ret)
+                    test = fwrite( DISABLE_COMMAND, sizeof(char), strlen(DISABLE_COMMAND), charDevice);
+                    if(!test)
                         fprintf(stderr, "fwrite error\n");
                     else
                         printf("Disable Worked");
@@ -228,8 +215,8 @@ void *sensorControl(void *pointer)
                     break;
                     
                 case MSG_INTENABLE:
-                    ret = fwrite( ENABLE_COMMAND, sizeof(char), strlen(ENABLE_COMMAND), sensor_device);
-                    if(!ret)
+                    test = fwrite( ENABLE_COMMAND, sizeof(char), strlen(ENABLE_COMMAND), charDevice);
+                    if(!test)
                         fprintf(stderr, "fwrite error\n");
                     else
                         printf("Enable Worked");
@@ -240,9 +227,9 @@ void *sensorControl(void *pointer)
                     // Format string command
                     sprintf( INSIDE_COMMAND, "between %d %d", commandStruct.lowBound, commandStruct.highBound);
                     
-                    ret = fwrite( INSIDE_COMMAND, sizeof(char), strlen(INSIDE_COMMAND), sensor_device);
+                    test = fwrite( INSIDE_COMMAND, sizeof(char), strlen(INSIDE_COMMAND), charDevice);
                     
-                    if(!ret)
+                    if(!test)
                         fprintf(stderr, "fwrite error\n");
                     else
                         printf("Between Worked");
@@ -254,8 +241,8 @@ void *sensorControl(void *pointer)
                     // Format string command
                     sprintf( OUTSIDE_COMMAND, "outside %d %d", commandStruct.lowBound, commandStruct.highBound);
                     
-                    ret = fwrite( OUTSIDE_COMMAND, sizeof(char), strlen(INSIDE_COMMAND), sensor_device);
-                    if(!ret)
+                    test = fwrite( OUTSIDE_COMMAND, sizeof(char), strlen(INSIDE_COMMAND), charDevice);
+                    if(!test)
                         fprintf(stderr, "fwrite error\n");
                     else
                         printf("Outside Worked");
@@ -276,7 +263,7 @@ void *sensorControl(void *pointer)
         
         //**Stop Serving Command**
         
-        fclose(sensor_device);
+        fclose(charDevice);
         
         // Give up the CPU for a while
         usleep(WAIT_TIME);

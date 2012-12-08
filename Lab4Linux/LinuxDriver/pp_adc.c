@@ -922,7 +922,8 @@ static ssize_t hook_write(struct file *filp, const char __user *buffer, size_t s
 	
 	// get commands from user space
 	copy_from_user(kbuf, buffer, MIN(STRING_BUFFER_SIZE, size));
-	
+	printk(KERN_INFO "Size of string buffer: %d", STRING_BUFFER_SIZE);
+
 	//if(parport_claim(p->pardev))
 	//	return -EBUSY;
 	p->claimed=1;
@@ -931,6 +932,7 @@ static ssize_t hook_write(struct file *filp, const char __user *buffer, size_t s
 	// pass commands to the sensor
 	cmd_eval(p, kbuf);
 
+	printk(KERN_INFO "Size: %d", size);
 	copy_to_user((void *)buffer, (void*)ADCandRTCData, sizeof(ADCandRTCData));
 	
 	printk(KERN_INFO "BUFFER: %s",buffer);
