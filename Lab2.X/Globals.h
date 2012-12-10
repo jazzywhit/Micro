@@ -24,18 +24,20 @@ typedef struct{
     unsigned control:8;
 }timeStr;
 
-typedef union{
-    unsigned int allbits;
-    struct{
-       unsigned adresl:8;
-       unsigned adresh:2;
-    }read;
-    struct{
-        unsigned lbits:4;
-        unsigned mbits:4;
-        unsigned hbits:2;
-    }write;
-}ADCData;
+    typedef union {
+
+        unsigned short allbits;
+        struct {
+            unsigned adresl : 8;
+            unsigned adresh : 2;
+        } read;
+
+        struct {
+            unsigned lbits : 4;
+            unsigned mbits : 4;
+            unsigned hbits : 2;
+        } write;
+    } ADCData;
 
 typedef union{
     struct{
@@ -54,6 +56,7 @@ typedef struct{
 }ADCControl;
 
 #define  INT_FLAG PORTDbits.RD6
+#define  LED PORTDbits.RD7
 #define BYTE unsigned char
 
 //Parallel Port Commands ----------------------------

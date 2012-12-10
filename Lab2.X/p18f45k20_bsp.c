@@ -32,6 +32,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 void P18f45k20Init(void) {
+
     InitPorts();
     InitADC();
     InitI2C();
@@ -87,34 +88,40 @@ void ReadADC(ADCControl *adcControl) {
 
 void ProcessADC(ADCControl *adcControl) {
 
-    if (adcControl->enable){
-        if (adcControl->outside){ // Outside
-            if (adcControl->adcData.allbits > adcControl->high.allbits || adcControl->adcData.allbits < adcControl->low.allbits){
-                PORTDbits.RD6 = 1;
+
+     // Control Interrupt
+    if (adcControl->enable) {
+        if (adcControl->outside) { // Outside
+            if ((unsigned short)adcControl->adcData.allbits > (unsigned short)adcControl->high.allbits ||
+                    (unsigned short)adcControl->adcData.allbits < (unsigned short)adcControl->low.allbits) {
+                INT_FLAG = 1;
             } else {
-                PORTDbits.RD6 = 0;
+                INT_FLAG = 0;
             }
         } else { // In-Between
-            if (adcControl->adcData.allbits < adcControl->high.allbits && adcControl->adcData.allbits > adcControl->low.allbits){
-                PORTDbits.RD6 = 1;
-            } else  {
-                PORTDbits.RD6 = 0;
+            if ((unsigned short)adcControl->adcData.allbits < (unsigned short)adcControl->high.allbits &&
+                    (unsigned short)adcControl->adcData.allbits > (unsigned short)adcControl->low.allbits) {
+                INT_FLAG = 1;
+            } else {
+                INT_FLAG = 0;
             }
         }
     }
-    
-    // Control interrupt
-    if (adcControl->outside){ // Outside
-        if (adcControl->adcData.allbits > adcControl->high.allbits || adcControl->adcData.allbits < adcControl->low.allbits){
-            PORTDbits.RD7 = 1;
+
+    // Control LED
+    if (adcControl->outside) { // Outside
+        if ((unsigned short)adcControl->adcData.allbits > (unsigned short)adcControl->high.allbits ||
+                (unsigned short)adcControl->adcData.allbits < (unsigned short)adcControl->low.allbits) {
+            LED = 1;
         } else {
-            PORTDbits.RD7 = 0;
+            LED = 0;
         }
     } else { // In-Between
-        if (adcControl->adcData.allbits < adcControl->high.allbits && adcControl->adcData.allbits > adcControl->low.allbits){
-            PORTDbits.RD7 = 1;
-        } else  {
-            PORTDbits.RD7 = 0;
+        if ((unsigned short)adcControl->adcData.allbits < (unsigned short)adcControl->high.allbits &&
+                (unsigned short)adcControl->adcData.allbits > (unsigned short)adcControl->low.allbits) {
+            LED = 1;
+        } else {
+            LED = 0;
         }
     }
 
