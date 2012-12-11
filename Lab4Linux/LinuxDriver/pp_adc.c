@@ -343,12 +343,12 @@ char getDay(int intDay)
 //------------------------------- DisplayData --------------------------------------------
 //Purpose: Diaplay the ADC and RTC data retreived from the PIC.
 
-void DisplayData(unsigned char *RTCData, unsigned char *adcResult){
+void DisplayData(unsigned char *RTCData, unsigned short adcResult){
 
     char day = getDay(RTCData[3]);
 	
 	printk(KERN_INFO "\nIn display data\n");
-    printk(KERN_INFO "\nADC result: %u" , *adcResult);
+    printk(KERN_INFO "\nADC result: %u" , adcResult);
     
 	printk(KERN_INFO "Time: %02u:%02u:%02u %c %02u/%02u/20%02u",
            RTCData[2], // Hour
@@ -365,7 +365,7 @@ void DisplayData(unsigned char *RTCData, unsigned char *adcResult){
 char ADCandRTCData[STRING_BUFFER_SIZE];
 //------------------------------- formatData --------------------------------------------
 //Purpose: Formats the ADC and RTC data retreived from the PIC.
-static int formatResultString(unsigned char *RTCData, unsigned char *adcResult){
+static int formatResultString(unsigned char *RTCData, unsigned short adcResult){
 	
 
 	int numberOfCharactersCopied = 0;
@@ -376,7 +376,7 @@ static int formatResultString(unsigned char *RTCData, unsigned char *adcResult){
 	// Copy get results to global string buffer so it can be later passed to user space.
 	numberOfCharactersCopied = snprintf(ADCandRTCData, STRING_BUFFER_SIZE,
 										"\nADCValue: %02u Time: %02u:%02u:%02u %c %02u/%02u/20%02u\n\n",
-										*adcResult,
+										adcResult,
 										RTCData[2], // Hour
 										RTCData[1], // Minutes
 										RTCData[0], // Seconds
@@ -774,7 +774,7 @@ static unsigned char ReadByte(struct pp_adc *p){
 static int cmd_get(struct pp_adc *p, int params[2]){
 
 	unsigned char ackResult;
-	unsigned char adcResult;
+	unsigned short adcResult;
 	unsigned char RTCData[8];
 	int i ;
 	
@@ -811,10 +811,10 @@ static int cmd_get(struct pp_adc *p, int params[2]){
 	}
 	
 	// Display Data
-	DisplayData(RTCData, &adcResult);
+	DisplayData(RTCData, adcResult);
 	
 	// Copy result to global buffer
-	i = formatResultString(RTCData, &adcResult); // we can test i if needed
+	i = formatResultString(RTCData, adcResult); // we can test i if needed
 	
 	//Reset the IRQ Counter
 	p->irq_counter = 0;

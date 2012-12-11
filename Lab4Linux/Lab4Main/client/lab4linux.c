@@ -26,18 +26,19 @@ int main(void){
         printf("\nERROR: Failed to create Sensor Control Thread, ERROR code: %d\n", result);
         return 1;
     }
+	if ( (result = pthread_create(&serverComunicationThread, NULL, serverCommunication, NULL)) ){
+        
+        printf("\nERROR: Failed to create Server Communication Thread< ERROR code: %d\n", result);
+        return 1;
+    }
+    
     if ( (result = pthread_create(&interfaceThread, NULL, userInterface, NULL)) ){
         
         printf("\nERROR: Failed to create User Interface Thread, ERROR code: %d\n", result);
         return 1;
         
     }
-    if ( (result = pthread_create(&serverComunicationThread, NULL, serverCommunication, NULL)) ){
-        
-        printf("\nERROR: Failed to create Server Communication Thread< ERROR code: %d\n", result);
-        return 1;
-    }
-    
+
     // Wait for all threads to finish their jobs
     pthread_join(interfaceThread, NULL);
     pthread_join(sensorControlThread, NULL);

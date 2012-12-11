@@ -13,7 +13,7 @@
 #include <poll.h>
 #include <ctype.h>
 
-#define WAIT_TIME 1000       //Delay
+#define WAIT_TIME 1     // Delay
 
 #define MSG_NOTHING     0x0
 
@@ -42,7 +42,7 @@
 #define FALSE 0
 
 // Change this as needed 
-#define CLEAR_TERMINAL_ENABLE 1
+#define CLEAR_TERMINAL_ENABLE 0
 
 
 // Typedefs
