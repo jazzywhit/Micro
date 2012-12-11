@@ -65,32 +65,4 @@ typedef struct{
     ADCData lowBound;
 }Command;
 
-
-/*
-// Other Macros
-#define KEYBOARD 0
-#define INPUT_SIZE 20
-#define TIMEOUT 1
-
-// URL data to send
-typedef struct {
-
-	unsigned int id;
-	char passwd[50];
-	char name[9];     // "Shamrock" is 8 characters plus null terminator
-	char status[100];
-	unsigned int data;
-
-} url_data;
-
-// Global data
-extern unsigned char command;             // Command shared between interface and sensor threads
-extern unsigned char low_bound;
-extern unsigned char high_bound;
-extern url_data Url_Data;                 // URL data shared between sensor and communicate threads
-extern pthread_mutex_t command_mutex;     // Mutex shared between interface and sensor threads
-extern pthread_mutex_t communication_mutex; // Mutex shared between sensor and communicate threads
-extern size_t dummy(void *nothing1, size_t nothing2, size_t nothing3, void *nothing4);
-*/
-
 #endif

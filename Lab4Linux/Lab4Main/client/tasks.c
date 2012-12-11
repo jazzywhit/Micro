@@ -35,7 +35,7 @@ void *userInterface(void *pointer){
 
     while(TRUE){
 
-		usleep(WAIT_TIME);
+	usleep(WAIT_TIME);
         
         pthread_mutex_lock(&stdoutMutex); // <-----------------------LOCK STDOUT
         
@@ -345,7 +345,6 @@ void *serverCommunication(void *pointer)
 		
 		sem_wait(&sensorDataReady);
 
-
         const char* hostname="localhost";
         const int   port=8000;
         const int   id=1;
@@ -357,7 +356,6 @@ void *serverCommunication(void *pointer)
         
 		pthread_mutex_lock(&sensorDataMutex); // <-----------------------LOCK SENSOR DATA
 
-		
         snprintf(buf, 1024, "http://%s:%d/update?id=%d&password=%s&name=%s&data=%d&status=%s",
                  hostname,
                  port,
@@ -369,10 +367,9 @@ void *serverCommunication(void *pointer)
 		
 		pthread_mutex_unlock(&sensorDataMutex); // <-----------------------UNLOCK SENSOR DATA
 
-		
         HTTP_GET(buf);
-		
     }
+	
     pthread_exit(NULL);
 }
 
