@@ -14,19 +14,10 @@ pthread_mutex_t quitMutex = PTHREAD_MUTEX_INITIALIZER;
 // Semaphores
 sem_t sensorDataReady;
 
-// Initialization only needed in single threaded application
+// Initialization of global variables
 RTCData rtcDataStruct = { 1, 2, 3, 4, 5, 6 , 7, 8 };
 Command commandStruct = { MSG_GET, 0 , 0 };
 int sensorData;
-
-// Used in file descriptor set implementation
-char *ping = "ping";
-char *reset = "reset";
-char *get = "get";
-char *enable = "enable";
-char *disable = "disable";
-char *between = "between";
-char *outside = "outside";
 
 int quit = 0;
 
@@ -38,16 +29,10 @@ int quit = 0;
  ------------------------------------------------------*/
 void *userInterface(void *pointer){
     
-    fd_set interface_fds;
-	int fd=0;
     char cmd; // Command read from the command line.
     unsigned short low;
     unsigned short high;
-    
-	
-	FD_ZERO(&interface_fds); // Initialize file descriptor set
-	FD_SET(0, &interface_fds); // Adds standard input file descriptor (always 0) to file descriptor set
-	
+
     while(TRUE){
 
 		usleep(WAIT_TIME);
@@ -64,26 +49,19 @@ void *userInterface(void *pointer){
         //Ask user for input
         printf("\n\nEnter a command: ");
         
-//        // Handle user input.
+        // Handle user input.
         scanf("%c", &cmd);
-
-//		if(FD_ISSET(fd, &interface_fds))
-//		{
-//			if (fd == 0) // Did we sense activity from the keyboard?
-//			{
-//				cmd = fgetc(stdin);
-//				fflush(stdin);
-//				fflush(stdout);
-//			}
-//		}
-		//        // If between or Outside read next 2 numbers
+		
+		
+		// If between or Outside read next 2 numbers
         if (toupper(cmd) == 'B'  || toupper(cmd) == 'O' ) {
 			
             int scanfTest = scanf("%hu%hu" , &low, &high);
             if (scanfTest != 2) {
 				
                 printf("\ERROR: You must enter the lower and upper bounds with B and O.");
-                 pthread_exit(NULL);
+				while (getchar() != '\n');
+				continue;
             }
         }
         
@@ -186,7 +164,7 @@ void *sensorControl(void *pointer)
 	char DISABLE_COMMAND[]   = "disable";
 	char OUTSIDE_COMMAND[20] = {0};
 	char INSIDE_COMMAND[20]  = {0};
-	char GET_COMMAND[]  = "get";
+	char GET_COMMAND[] 		 = "get";
 	char adcBuffer[BUFFER_SIZE];
 
 	int test;	
@@ -228,34 +206,36 @@ void *sensorControl(void *pointer)
             switch(commandStruct.command)
             {
 					
-		case MSG_GET:
+				case MSG_GET:
 					test = fwrite( GET_COMMAND, sizeof(char), strlen(GET_COMMAND), charDevice);
+					
 					if(!test)
 						fprintf(stderr, "fwrite error\n");
                     else
 						test = fread(adcBuffer, sizeof(char), BUFFER_SIZE , charDevice);
+					
 					printf("%s", adcBuffer);
 					
 					pthread_mutex_lock(&sensorDataMutex); // <-----------------------LOCK SENSOR DATA
 					
 					// Update sensorData
+					// Discard first token
 					sensorData = atoi( strtok (adcBuffer," "));
-					
+					// Use second token
 					sensorData = atoi(strtok (NULL, " "));
-					//printf ("%d\n", sensorData);
-					
+					// Post semaphore
 					sem_post(&sensorDataReady);
 					
 					pthread_mutex_unlock(&sensorDataMutex); // <-----------------------UNLOCK SENSOR DATA
 					break;
-
+					
                 case MSG_PING:
                     test = fwrite( PING_COMMAND, sizeof(char), strlen(PING_COMMAND), charDevice);
                     if(!test)
                         fprintf(stderr, "fwrite error\n");
                     else
                         printf("Ping Worked\n");
-				
+					
                     break;
                     
                 case MSG_RESET:
@@ -311,18 +291,18 @@ void *sensorControl(void *pointer)
                     
                     break;
                     
-
+					
                 default:
                     /* Unrecognized command type: this is bad */
                     fprintf(stderr, "ERROR:Unrecognized command in sensor control thread\n");
                     break;
                     
             }
-
+			
         }
         
         pthread_mutex_unlock(&stdoutMutex); // <-----------------------UNLOCK STDOUT
-
+		
         fclose(charDevice);
         
         // Give up the CPU for a while
@@ -388,12 +368,7 @@ void *serverCommunication(void *pointer)
                  status);
 		
 		pthread_mutex_unlock(&sensorDataMutex); // <-----------------------UNLOCK SENSOR DATA
-//		
-//		
-//		pthread_mutex_lock(&stdoutMutex); // <-----------------------LOCK STDOUT
-//		printf("\nURL sent %s", buf);
-//		printf("\nADC value in URL %d" , sensorData);
-//		pthread_mutex_unlock(&stdoutMutex); // <-----------------------UNLOCK STDOUT
+
 		
         HTTP_GET(buf);
 		

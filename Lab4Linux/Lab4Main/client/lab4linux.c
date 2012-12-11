@@ -16,7 +16,7 @@ int main(void){
     // Thread Declarations
     pthread_t interfaceThread;
     pthread_t sensorControlThread;
-    pthread_t serverComunicationThread;
+    pthread_t servercommunicationThread;
 
     ClearTerminal();
     
@@ -26,9 +26,9 @@ int main(void){
         printf("\nERROR: Failed to create Sensor Control Thread, ERROR code: %d\n", result);
         return 1;
     }
-	if ( (result = pthread_create(&serverComunicationThread, NULL, serverCommunication, NULL)) ){
+	if ( (result = pthread_create(&servercommunicationThread, NULL, serverCommunication, NULL)) ){
         
-        printf("\nERROR: Failed to create Server Communication Thread< ERROR code: %d\n", result);
+        printf("\nERROR: Failed to create Server Communication Thread, ERROR code: %d\n", result);
         return 1;
     }
     
@@ -42,7 +42,7 @@ int main(void){
     // Wait for all threads to finish their jobs
     pthread_join(interfaceThread, NULL);
     pthread_join(sensorControlThread, NULL);
-    pthread_join(serverComunicationThread, NULL);
+    pthread_join(servercommunicationThread, NULL);
     
     // Quit
 
